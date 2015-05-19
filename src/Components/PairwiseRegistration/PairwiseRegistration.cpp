@@ -91,6 +91,8 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 	registerProperty(prop_ICP);
 	registerProperty(prop_ICP_MaxCorrespondenceDistance);
 	registerProperty(prop_ICP_MaximumIterations);
+	prop_ICP_MaximumIterations.addConstraint("1");
+	prop_ICP_MaximumIterations.addConstraint("999");
 	registerProperty(prop_ICP_TransformationEpsilon);
 	registerProperty(prop_ICP_EuclideanFitnessEpsilon);
 	registerProperty(prop_ICP_colour);
@@ -197,19 +199,21 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 	if (previous_cloud_xyzrgb->empty ()) {
 		// Remember previous cloud.
 		if (store_previous_cloud_flag){
-			CLOG(LINFO) << "Adding first cloud and returning initial transformation";
+			CLOG(LINFO) << "Adding first cloud and returning transformation equal to identity matrix";
 			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*transformed_cloud_xyzrgb, *previous_cloud_xyzrgb);
+			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
 		}//: if
 
-		// Return initial transformation XYZRGB.
-		out_transformation_xyzrgb.write(hm_);
+		// Return identity matrix.
+		Types::HomogMatrix result;
+		result.setElements( Eigen::Matrix4f::Identity () );
+		out_transformation_xyzrgb.write(result);
 		return;
 	}//: if	
 
 	// Perform pairwise registration.
 	if (prop_ICP) {
-		if (prop_ICP_colour && prop_ICP_normals) {
+/*		if (prop_ICP_colour && prop_ICP_normals) {
 			CLOG(LINFO) << "Using ICP with colour and normals for registration refinement";
 
 			// Compute surface normals.
@@ -305,7 +309,7 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 			// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
 			icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
 			// Set the maximum number of iterations (criterion 1)
-			icp.setMaximumIterations (prop_ICP_MaximumIterations);
+			icp.setMaximumIterations (2);
 			// Set the transformation epsilon (criterion 2)
 			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
 			// Set the euclidean distance difference epsilon (criterion 3)
@@ -319,13 +323,44 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 			icp.setInputTarget (transformed_cloud_xyzrgbnormals);
 
 			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Final (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-			
+
+
+				    // Run the same optimization in a loop and visualize the results
+				    Eigen::Matrix4f Ti = Eigen::Matrix4f::Identity (), prev, targetToSource;
+				    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr reg_result (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+				    reg_result = previous_cloud_xyzrgbnormals;
+
+				    for (int i = 0; i < prop_ICP_MaximumIterations; ++i)
+				    {
+					CLOG(LINFO) << "ICP normals iteration:" << i;
+				      // Estimate
+					icp.setInputSource(reg_result);
+					icp.align (*Final);
+					if(icp.converged_==false)
+					{
+						CLOG(LERROR) << "Not enough correspondences found!";
+						return;
+					}
+				  		//accumulate transformation between each Iteration
+				      Ti = icp.getFinalTransformation () * Ti;
+
+				  		//if the difference between this transformation and the previous one
+				  		//is smaller than the threshold, refine the process by reducing
+				  		//the maximal correspondence distance
+				      if (fabs ((icp.getLastIncrementalTransformation () - prev).sum ()) < icp.getTransformationEpsilon ())
+					icp.setMaxCorrespondenceDistance (icp.getMaxCorrespondenceDistance () - 0.001);
+				      prev = icp.getLastIncrementalTransformation ();
+				      reg_result= Final;
+				    }
+					Eigen::Matrix4f icp_trans = Ti.inverse();
+
 			// Align clouds.
-			icp.align(*Final);
+//			icp.align(*Final);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+//			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
@@ -368,7 +403,7 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 			result.setElements(hm_.getElements()*icp_trans);
 			out_transformation_xyzrgb.write(result);
 
-		} else {
+		} else {*/
 			CLOG(LINFO) << "Using stantard ICP for registration refinement";
 			// Use ICP to get "better" transformation.
 			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
@@ -392,20 +427,20 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
 			Types::HomogMatrix result;
-			result.setElements(hm_.getElements()*icp_trans);
+			result.setElements(hm_.getElements().inverse()*icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
-		}//: else ICP
+//		}//: else ICP
 
 		// Remember previous cloud.
 		if (store_previous_cloud_flag){
 			CLOG(LINFO) << "Storing cloud as previous";
 			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*transformed_cloud_xyzrgb, *previous_cloud_xyzrgb);
+			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
 		}//: if
 
 	} else {
@@ -413,11 +448,13 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 		// Remember previous cloud.
 		if (store_previous_cloud_flag){
 			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*transformed_cloud_xyzrgb, *previous_cloud_xyzrgb);
+			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
 		}//: if
 
-		// Return initial transformation XYZRGB.
-		out_transformation_xyzrgb.write(hm_);
+		// Return identity matrix.
+		Types::HomogMatrix result;
+		result.setElements( Eigen::Matrix4f::Identity () );
+		out_transformation_xyzrgb.write(result);
 	}//: else
 }
 

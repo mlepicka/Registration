@@ -26,7 +26,8 @@
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
 <!--					<param name="sequence.directory">/home/mlaszkow/DCL/ecovi/data/ahmad/</param> -->
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
+<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param> -->
+					<param name="sequence.directory">/media/tkornuta/6807-6DD7/2015_3dvs/testowe/ahmad/</param> 
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -34,7 +35,8 @@
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
 <!--					<param name="sequence.directory">/home/mlaszkow/DCL/ecovi/data/ahmad/</param> -->
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
+<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param> -->
+					<param name="sequence.directory">/media/tkornuta/6807-6DD7/2015_3dvs/testowe/ahmad/</param> 
 					<param name="sequence.pattern">.*_depth.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
