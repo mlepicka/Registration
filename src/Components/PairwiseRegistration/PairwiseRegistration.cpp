@@ -175,31 +175,20 @@ void  PairwiseRegistration::pairwise_registration_xyz(){
 void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyzrgb";
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb = in_cloud_xyzrgb.read();
+	// Temporary variable storing the resulting transformation.
+	Types::HomogMatrix result;
 
 	CLOG(LERROR) << "Current cloud size:" << cloud_xyzrgb->size();
 	if (!previous_cloud_xyzrgb->empty ())
 			CLOG(LERROR) << "Previous cloud size:" << previous_cloud_xyzrgb->size();
 
 	/// Previous cloud empty - initialization.
-	if (previous_cloud_xyzrgb->empty ()) {
+	if (previous_cloud_xyzrgb->empty () || !prop_ICP) {
 		// Return identity matrix.
-		CLOG(LINFO) << "Returning identity matrix";
-		Types::HomogMatrix result;
+		CLOG(LINFO) << "ICP refinement not used";
 		result.setElements( Eigen::Matrix4f::Identity () );
-		out_transformation_xyzrgb.write(result);
-
-		// Remember previous cloud.
-		if (store_previous_cloud_flag){
-			CLOG(LINFO) << "First cloud received - storing as previous";
-			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
-		}//: if
-
-		return;
-	}//: if	
-
-	// Perform pairwise registration.
-	if (prop_ICP) {
+	} else {
+		// Perform pairwise registration.
 		if (prop_ICP_colour && prop_ICP_normals) {
 			CLOG(LINFO) << "Using ICP with colour and normals for registration refinement";
 
@@ -241,14 +230,14 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
 
 			// Set correspondence two-step correspondence estimation using colour.
-		        pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
-		        icp.setCorrespondenceEstimation(ceptr);
+			pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
+			icp.setCorrespondenceEstimation(ceptr);
 
 			icp.setInputSource (previous_cloud_xyzrgbnormal);
 			icp.setInputTarget (cloud_xyzrgbnormal);
 
 			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-			
+		
 			// Align clouds.
 			icp.align(*aligned_cloud_xyzrgbnormal);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
@@ -258,7 +247,6 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			Types::HomogMatrix result;
 			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 
@@ -301,7 +289,6 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
 			// Set the euclidean distance difference epsilon (criterion 3)
 			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
-
 
 			// Set the point representation - x,y,z and curvature.
 			//icp.setPointRepresentation (boost::make_shared<const MyPointRepresentation> (point_representation));
@@ -351,7 +338,6 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			Types::HomogMatrix result;
 			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 		} else if (prop_ICP_colour) {
@@ -369,14 +355,14 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
 
 			// Set correspondence two-step correspondence estimation using colour.
-		        pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>);
-		        icp.setCorrespondenceEstimation(ceptr);
+			pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>);
+			icp.setCorrespondenceEstimation(ceptr);
 
 			// Add source and target clours.
 			icp.setInputSource(previous_cloud_xyzrgb);
 			icp.setInputTarget(cloud_xyzrgb);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
-			
+		
 			// Align clouds.
 			icp.align(*aligned_cloud_rgbxyz);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
@@ -386,7 +372,6 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			Types::HomogMatrix result;
 			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 
@@ -418,24 +403,20 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			Types::HomogMatrix result;
 			result.setElements(icp_trans.inverse());
-			out_transformation_xyzrgb.write(result);
+
 		}//: else ICP
+	}//: else - !previous_cloud_xyzrgb->empty ()
 
-	} else {
-		CLOG(LINFO) << "ICP refinement not used";
-		// Return identity matrix.
-		Types::HomogMatrix result;
-		result.setElements( Eigen::Matrix4f::Identity () );
-		out_transformation_xyzrgb.write(result);
-	}//: else
+	// Return the transformation.
+	out_transformation_xyzrgb.write(result);
 
-	// Remember previous cloud.
+	// Store previous cloud.
 	if (store_previous_cloud_flag){
 		CLOG(LINFO) << "Storing cloud as previous";
 		store_previous_cloud_flag = false;
-		pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+		// pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+		pcl::transformPointCloud(*cloud_xyzrgb, *previous_cloud_xyzrgb, result.getElements()) ;
 	}//: if
 }
 
