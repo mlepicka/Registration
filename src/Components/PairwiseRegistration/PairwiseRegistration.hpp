@@ -75,9 +75,6 @@ protected:
 	/// Input data stream containing XYZRGB cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyzrgb;
 
-	/// Initial transformation between clouds.
-	Base::DataStreamIn<Types::HomogMatrix, Base::DataStreamBuffer::Newest> in_transformation;
-
 	/// Resulting transformation between XYZ clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyz;
 
@@ -118,14 +115,11 @@ protected:
 	Base::Property<bool> prop_ICP_normals;
 
 
-	/// Registration handler.
-	void pairwise_registration();
+	/// Align XYZ clouds - handler.
+	void pairwise_registration_xyz();
 
-	/// Aligns XYZ clouds.
-	void registration_xyz(Types::HomogMatrix hm_);
-
-	/// Aligns XYZRGB clouds.
-	void registration_xyzrgb(Types::HomogMatrix hm_);
+	/// Aligns XYZRGB clouds - handler.
+	void pairwise_registration_xyzrgb();
 
 	/// Event handler function - store cloud as previous.
 	void onStorePreviousButtonPressed();

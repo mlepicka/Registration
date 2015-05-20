@@ -125,17 +125,20 @@
 				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="30" bump="0">
 				</Component>
 
-				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="31" bump="1">
+				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="31" bump="0">
+				</Component>
+
+				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="32" bump="1">
 					<param name="Mode.ICP">1</param>
-					<param name="ICP.UseColour">0</param>
+					<param name="ICP.UseColour">1</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
 					<param name="ICP.MaximumIterations">50</param>
-					<param name="ICP.EuclideanFitnessEpsilon">0.1</param>
+					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
 					<param name="ICP.TransformationEpsilon">1e-20</param>
 				</Component>
 
-				<Component name="CloudStorage" type="Registration:CloudStorage" priority="32" bump="0">
+				<Component name="CloudStorage" type="Registration:CloudStorage" priority="33" bump="0">
 				</Component>
 
 
@@ -200,7 +203,7 @@
 			<sink>DepthSequence.in_next_image_trigger</sink>
 <!--			<sink>RGBSequence.in_stream_trigger</sink>
 			<sink>DepthSequence.in_stream_trigger</sink>-->
-			<sink>PairwiseRegistration.in_store_previous_cloud_trigger</sink>
+<!--			<sink>PairwiseRegistration.in_store_previous_cloud_trigger</sink>-->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 		</Source>
 
@@ -284,9 +287,7 @@
 		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
 <!--			<sink>MLSSmoothing.in_cloud_xyzrgb</sink>-->
 <!--			<sink>Viewer.in_cloud_xyzrgb</sink>-->
-			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
-			<sink>CloudStorage.in_cloud_xyzrgb</sink>
-<!--			<sink>Viewer.in_cloud_xyzrgb</sink>-->
+			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
 		</Source>
 
 <!--		<Source name="MLSSmoothing.out_cloud_xyzrgb">
@@ -298,8 +299,15 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name= "InitialTransformation.out_homogMatrix">
-			<sink>PairwiseRegistration.in_transformation</sink>
+			<sink>CloudTransformer.in_hm</sink>
 		</Source>
+
+		<Source name= "CloudTransformer.out_cloud_xyzrgb">
+			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
+			<sink>CloudStorage.in_cloud_xyzrgb</sink>
+<!--			<sink>Viewer.in_cloud_xyzrgb</sink>-->
+		</Source>
+
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>

@@ -106,18 +106,19 @@ void PairwiseRegistration::prepareInterface() {
 	// Register data streams.
 	registerStream("in_cloud_xyz", &in_cloud_xyz);
 	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
-	registerStream("in_transformation", &in_transformation);
 	registerStream("in_store_previous_cloud_trigger", &in_store_previous_cloud_trigger);
 	registerStream("out_transformation_xyz", &out_transformation_xyz);
 	registerStream("out_transformation_xyzrgb", &out_transformation_xyzrgb);
 
 	// Register handlers
-	registerHandler("pairwise_registration", boost::bind(&PairwiseRegistration::pairwise_registration, this));
-	addDependency("pairwise_registration", &in_transformation);
+	registerHandler("pairwise_registration_xyz", boost::bind(&PairwiseRegistration::pairwise_registration_xyz, this));
+	addDependency("pairwise_registration_xyz", &in_cloud_xyz);
+
+	registerHandler("pairwise_registration_xyzrgb", boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb, this));
+	addDependency("pairwise_registration_xyzrgb", &in_cloud_xyzrgb);
 
 	// Register button-triggered handlers.
 	registerHandler("Store previous cloud", boost::bind(&PairwiseRegistration::onStorePreviousButtonPressed, this));
-
 
 	// Register externally-triggered handler.
 	registerHandler("onStorePreviousCloudTriggered", boost::bind(&PairwiseRegistration::onStorePreviousCloudTriggered, this));
@@ -159,67 +160,53 @@ void PairwiseRegistration::onStorePreviousCloudTriggered(){
 }
 
 
-void PairwiseRegistration::pairwise_registration() {
-	CLOG(LTRACE) << "PairwiseRegistration::pairwise_registration";
-    // Read hmomogenous matrix.s
-    Types::HomogMatrix hm = in_transformation.read();
-
-    // Try to align XYZ.
-    if(!in_cloud_xyz.empty())
-        registration_xyz(hm);
-
-    // Try to align XYZRGB.
-    if(!in_cloud_xyzrgb.empty())
-        registration_xyzrgb(hm);
-}
-
-void  PairwiseRegistration::registration_xyz(Types::HomogMatrix hm_){
-	CLOG(LTRACE) << "PairwiseRegistration::registration_xyz";
+void  PairwiseRegistration::pairwise_registration_xyz(){
+	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyz";
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = in_cloud_xyz.read();
 
-	// Apply initial transformation.
-//	pcl::PointCloud<pcl::PointXYZ>::Ptr transformed_cloud (new pcl::PointCloud<pcl::PointXYZ> ());
-//	pcl::transformPointCloud (*cloud, *cloud, hm_.getElements());
-
-	// Return resulting transformation XYZ.
-	out_transformation_xyzrgb.write(hm_);
-
 	CLOG(LERROR) << "PairwiseRegistration::registration_xyz NOT IMPLEMENTED!";
+
+	// Return identity matrix as transformation XYZ.
+	Types::HomogMatrix result;
+	result.setElements( Eigen::Matrix4f::Identity () );
+	out_transformation_xyz.write(result);
 }
 
-void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
-	CLOG(LTRACE) << "PairwiseRegistration::registration_xyzrgb";
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = in_cloud_xyzrgb.read();
+void  PairwiseRegistration::pairwise_registration_xyzrgb(){
+	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyzrgb";
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb = in_cloud_xyzrgb.read();
 
-	// Apply initial transformation.
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr transformed_cloud_xyzrgb (new pcl::PointCloud<pcl::PointXYZRGB> ());
-	pcl::transformPointCloud (*cloud, *transformed_cloud_xyzrgb, hm_.getElements());
+	CLOG(LERROR) << "Current cloud size:" << cloud_xyzrgb->size();
+	if (!previous_cloud_xyzrgb->empty ())
+			CLOG(LERROR) << "Previous cloud size:" << previous_cloud_xyzrgb->size();
 
 	/// Previous cloud empty - initialization.
 	if (previous_cloud_xyzrgb->empty ()) {
-		// Remember previous cloud.
-		if (store_previous_cloud_flag){
-			CLOG(LINFO) << "Adding first cloud and returning transformation equal to identity matrix";
-			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
-		}//: if
-
 		// Return identity matrix.
+		CLOG(LINFO) << "Returning identity matrix";
 		Types::HomogMatrix result;
 		result.setElements( Eigen::Matrix4f::Identity () );
 		out_transformation_xyzrgb.write(result);
+
+		// Remember previous cloud.
+		if (store_previous_cloud_flag){
+			CLOG(LINFO) << "First cloud received - storing as previous";
+			store_previous_cloud_flag = false;
+			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+		}//: if
+
 		return;
 	}//: if	
 
 	// Perform pairwise registration.
 	if (prop_ICP) {
-/*		if (prop_ICP_colour && prop_ICP_normals) {
+		if (prop_ICP_colour && prop_ICP_normals) {
 			CLOG(LINFO) << "Using ICP with colour and normals for registration refinement";
 
 			// Compute surface normals.
-			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normals (new pcl::PointCloud<pcl::Normal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormals (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr transformed_cloud_xyzrgbnormals (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normal (new pcl::PointCloud<pcl::Normal>);
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
 			pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
 			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
@@ -229,15 +216,15 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 			// Compute normals for previous cloud.
 			norm_est.setInputCloud (previous_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normals);
+			norm_est.compute (*tmp_cloud_normal);
 			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normals, *previous_cloud_xyzrgbnormals);
+			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normal, *previous_cloud_xyzrgbnormal);
 
 			// Compute normals for transformed cloud.
-			norm_est.setInputCloud (transformed_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normals);
+			norm_est.setInputCloud (cloud_xyzrgb);
+			norm_est.compute (*tmp_cloud_normal);
 			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*transformed_cloud_xyzrgb, *tmp_cloud_normals, *transformed_cloud_xyzrgbnormals);
+			pcl::concatenateFields(*cloud_xyzrgb, *tmp_cloud_normal, *cloud_xyzrgbnormal);
 
 
 			// Use ICP with normals AND colour to get "better" transformation.
@@ -257,22 +244,22 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 		        pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
 		        icp.setCorrespondenceEstimation(ceptr);
 
-			icp.setInputSource (previous_cloud_xyzrgbnormals);
-			icp.setInputTarget (transformed_cloud_xyzrgbnormals);
+			icp.setInputSource (previous_cloud_xyzrgbnormal);
+			icp.setInputTarget (cloud_xyzrgbnormal);
 
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Final (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
 			
 			// Align clouds.
-			icp.align(*Final);
+			icp.align(*aligned_cloud_xyzrgbnormal);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
 			Types::HomogMatrix result;
-			result.setElements(hm_.getElements()*icp_trans);
+			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 
 		} else if (prop_ICP_normals) {
@@ -280,9 +267,9 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 
 			// Compute surface normals.
-			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normals (new pcl::PointCloud<pcl::Normal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormals (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr transformed_cloud_xyzrgbnormals (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normal (new pcl::PointCloud<pcl::Normal>);
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
 
 			pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
 			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
@@ -292,15 +279,15 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 			// Compute normals for previous cloud.
 			norm_est.setInputCloud (previous_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normals);
+			norm_est.compute (*tmp_cloud_normal);
 			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normals, *previous_cloud_xyzrgbnormals);
+			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normal, *previous_cloud_xyzrgbnormal);
 
 			// Compute normals for transformed cloud.
-			norm_est.setInputCloud (transformed_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normals);
+			norm_est.setInputCloud (cloud_xyzrgb);
+			norm_est.compute (*tmp_cloud_normal);
 			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*transformed_cloud_xyzrgb, *tmp_cloud_normals, *transformed_cloud_xyzrgbnormals);
+			pcl::concatenateFields(*cloud_xyzrgb, *tmp_cloud_normal, *cloud_xyzrgbnormal);
 
 			// Use ICP with normals to get "better" transformation.
 //			pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
@@ -319,12 +306,12 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 			// Set the point representation - x,y,z and curvature.
 			//icp.setPointRepresentation (boost::make_shared<const MyPointRepresentation> (point_representation));
 
-			icp.setInputSource (previous_cloud_xyzrgbnormals);
-			icp.setInputTarget (transformed_cloud_xyzrgbnormals);
+			icp.setInputSource (previous_cloud_xyzrgbnormal);
+			icp.setInputTarget (cloud_xyzrgbnormal);
 
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr Final (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
 
-
+/*
 				    // Run the same optimization in a loop and visualize the results
 				    Eigen::Matrix4f Ti = Eigen::Matrix4f::Identity (), prev, targetToSource;
 				    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr reg_result (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
@@ -335,7 +322,7 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 					CLOG(LINFO) << "ICP normals iteration:" << i;
 				      // Estimate
 					icp.setInputSource(reg_result);
-					icp.align (*Final);
+					icp.align (*aligned_cloud_rgbxyzn);
 					if(icp.converged_==false)
 					{
 						CLOG(LERROR) << "Not enough correspondences found!";
@@ -352,20 +339,20 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 				      prev = icp.getLastIncrementalTransformation ();
 				      reg_result= Final;
 				    }
-					Eigen::Matrix4f icp_trans = Ti.inverse();
+					Eigen::Matrix4f icp_trans = Ti;*/
 
 			// Align clouds.
-//			icp.align(*Final);
+			icp.align(*aligned_cloud_xyzrgbnormal);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-//			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
 
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
 			Types::HomogMatrix result;
-			result.setElements(hm_.getElements()*icp_trans);
+			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 		} else if (prop_ICP_colour) {
 			CLOG(LINFO) << "Using ICP with colour for registration refinement";
@@ -387,23 +374,23 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 			// Add source and target clours.
 			icp.setInputSource(previous_cloud_xyzrgb);
-			icp.setInputTarget(transformed_cloud_xyzrgb);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr Final (new pcl::PointCloud<pcl::PointXYZRGB>());
+			icp.setInputTarget(cloud_xyzrgb);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
 			
 			// Align clouds.
-			icp.align(*Final);
+			icp.align(*aligned_cloud_rgbxyz);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation().inverse();
+			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
 			Types::HomogMatrix result;
-			result.setElements(hm_.getElements()*icp_trans);
+			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 
-		} else {*/
+		} else {
 			CLOG(LINFO) << "Using stantard ICP for registration refinement";
 			// Use ICP to get "better" transformation.
 			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
@@ -419,11 +406,11 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 			// Add source and target clours.
 			icp.setInputSource(previous_cloud_xyzrgb);
-			icp.setInputTarget(transformed_cloud_xyzrgb);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr Final (new pcl::PointCloud<pcl::PointXYZRGB>());
+			icp.setInputTarget(cloud_xyzrgb);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
 
 			// Align clouds.
-			icp.align(*Final);
+			icp.align(*aligned_cloud_rgbxyz);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
@@ -432,30 +419,24 @@ void  PairwiseRegistration::registration_xyzrgb(Types::HomogMatrix hm_){
 
 			// Set resulting transformation.
 			Types::HomogMatrix result;
-			result.setElements(hm_.getElements().inverse()*icp_trans.inverse());
+			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
-//		}//: else ICP
-
-		// Remember previous cloud.
-		if (store_previous_cloud_flag){
-			CLOG(LINFO) << "Storing cloud as previous";
-			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
-		}//: if
+		}//: else ICP
 
 	} else {
 		CLOG(LINFO) << "ICP refinement not used";
-		// Remember previous cloud.
-		if (store_previous_cloud_flag){
-			store_previous_cloud_flag = false;
-			pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud, *previous_cloud_xyzrgb);
-		}//: if
-
 		// Return identity matrix.
 		Types::HomogMatrix result;
 		result.setElements( Eigen::Matrix4f::Identity () );
 		out_transformation_xyzrgb.write(result);
 	}//: else
+
+	// Remember previous cloud.
+	if (store_previous_cloud_flag){
+		CLOG(LINFO) << "Storing cloud as previous";
+		store_previous_cloud_flag = false;
+		pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+	}//: if
 }
 
 
