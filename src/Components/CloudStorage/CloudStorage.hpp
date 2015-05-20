@@ -100,6 +100,11 @@ protected:
 	///  Property - overwrite last cloud.
 	Base::Property<bool> prop_overwrite_last_cloud;
 	
+
+	///  Property - maximal number of stored clouds. The 0 value deactivates the limit. If reached, removes clouds from start of the list (resulting in a cyclic buffer).
+	Base::Property<int> prop_clouds_limit;
+
+
 	/// Registration handler - activated when 
 	void pairwise_registration();
 

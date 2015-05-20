@@ -23,11 +23,15 @@ namespace CloudStorage {
 CloudStorage::CloudStorage(const std::string & name) :
 	Base::Component(name),
 	prop_store_first_cloud("StoreFirstCloud",true),
-	prop_overwrite_last_cloud("OverwriteLastCloud",false)
+	prop_overwrite_last_cloud("OverwriteLastCloud",false),
+	prop_clouds_limit("CloudsLimit",0)
 {
 	// Register properties.
 	registerProperty(prop_store_first_cloud);
 	registerProperty(prop_overwrite_last_cloud);
+	registerProperty(prop_clouds_limit);
+	prop_clouds_limit.addConstraint("0");
+	prop_clouds_limit.addConstraint("999");
 }
 
 CloudStorage::~CloudStorage() {
@@ -129,10 +133,22 @@ void CloudStorage::update_storage(){
 	if (add_cloud_flag)
 		add_cloud_to_storage();
 
-
 	// Clear storage.
 	if (clear_storage_flag)
 		clear_storage();
+
+	// Check size limit.
+	if (prop_clouds_limit > 0){
+		CLOG(LINFO) << "Limiting the size of stored clouds";
+		while (transformations.size() > prop_clouds_limit) {
+			// Remove first elements from vectors.
+			transformations.erase(transformations.begin());
+			if(!clouds_xyz.empty())
+				clouds_xyz.erase(clouds_xyz.begin());
+			if(!clouds_xyzrgb.empty())
+				clouds_xyzrgb.erase(clouds_xyzrgb.begin());
+		}//: if
+	}//: if
 
 	// Publish cloud merged from currently possesed ones.
 	publish_merged_clouds();
