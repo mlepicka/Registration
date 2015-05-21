@@ -80,6 +80,8 @@ protected:
 	/// Trigger - used for adding cloud to storage.
 	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_add_cloud_trigger;
 
+	/// Trigger - used for returning previous cloud.
+	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_return_previous_cloud_trigger;
 
 	/// Resulting transformation between XYZ clouds.
 //	Base::DataStreamOut <Types::HomogMatrix> out_xyz_transformation;
@@ -93,6 +95,9 @@ protected:
 	// Merged XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_cloud_xyzrgb;
 
+	// Previous  XYZRGB cloud.
+	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_previous_cloud_xyzrgb;
+
 
 	///  Property - store first cloud.
 	Base::Property<bool> prop_store_first_cloud;
@@ -100,6 +105,9 @@ protected:
 	///  Property - overwrite last cloud.
 	Base::Property<bool> prop_overwrite_last_cloud;
 	
+	///  Property - returns previous cloud (n-1) or cloud merged from all stored (0-:n-1).
+	Base::Property<bool> prop_return_previous_merged_cloud;
+
 
 	///  Property - maximal number of stored clouds. The 0 value deactivates the limit. If reached, removes clouds from start of the list (resulting in a cyclic buffer).
 	Base::Property<int> prop_clouds_limit;
@@ -148,6 +156,17 @@ protected:
 	/// Publishes clouds merged from currently possesed vectors of clouds.
 	void publish_merged_clouds();
 
+
+	/// Event handler function - return previous cloud.
+	void onReturnPreviousButtonPressed();
+
+	/// Event handler function - store previous cloud, externally triggered version.
+	void onReturnPreviousCloudTriggered();
+
+	// Return previous (single or merged) cloud.
+	void return_previous_cloud();
+
+
 private:
 	/// Flag indicating whether the cloud should be added to storage.
 	bool add_cloud_flag;
@@ -158,7 +177,6 @@ private:
 	/// Flag indicating that the storage should be cleared (remove all clouds).
 	bool clear_storage_flag;
 
-
 	// Vector containing transformations - poses wrt to the first cloud. First transformation is an identity matrix.
 	std::vector<Types::HomogMatrix> transformations;
 
@@ -167,6 +185,9 @@ private:
 
 	// Vector containing XYZ clouds.
 	std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds_xyz;
+
+	/// Flag indicating whether the one of the previous cloud (one or merged) should be returned as previous (i.e. to which the registration will be made in the next step).
+	bool return_previous_cloud_flag;
 
 };
 

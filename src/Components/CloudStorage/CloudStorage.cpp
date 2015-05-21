@@ -24,6 +24,7 @@ CloudStorage::CloudStorage(const std::string & name) :
 	Base::Component(name),
 	prop_store_first_cloud("StoreFirstCloud",true),
 	prop_overwrite_last_cloud("OverwriteLastCloud",false),
+	prop_return_previous_merged_cloud("ReturnPreviousMergedCloud",false),
 	prop_clouds_limit("CloudsLimit",0)
 {
 	// Register properties.
@@ -39,27 +40,34 @@ CloudStorage::~CloudStorage() {
 
 void CloudStorage::prepareInterface() {
 	// Register input data streams.
-	registerStream("in_cloud_xyz", &in_cloud_xyz);
+//	registerStream("in_cloud_xyz", &in_cloud_xyz);
 	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
 	registerStream("in_transformation", &in_transformation);
 	registerStream("in_add_cloud_trigger", &in_add_cloud_trigger);
+	registerStream("in_return_previous_cloud_trigger", &in_return_previous_cloud_trigger);
 
 	// Register output data streams.
-	registerStream("out_cloud_xyz", &out_cloud_xyz);
+//	registerStream("out_cloud_xyz", &out_cloud_xyz);
 	registerStream("out_cloud_xyzrgb", &out_cloud_xyzrgb);
+	registerStream("out_previous_cloud_xyzrgb", &out_previous_cloud_xyzrgb);
 
 	// Register button-triggered handlers.
 	registerHandler("Add cloud", boost::bind(&CloudStorage::onAddCloudButtonPressed, this));
 	registerHandler("Remove last cloud", boost::bind(&CloudStorage::onRemoveLastCloudButtonPressed, this));
 	registerHandler("Clear storage", boost::bind(&CloudStorage::onClearStorageButtonPressed, this));
+	registerHandler("Return previous cloud", boost::bind(&CloudStorage::onReturnPreviousButtonPressed, this));
 
 	// Register externally-triggered handler.
 	registerHandler("onAddCloudTriggered", boost::bind(&CloudStorage::onAddCloudTriggered, this));
 	addDependency("onAddCloudTriggered", &in_add_cloud_trigger);
 
-	// Registed "main" storage management method.
+	registerHandler("onReturnPreviousCloudTriggered", boost::bind(&CloudStorage::onReturnPreviousCloudTriggered, this));
+	addDependency("onReturnPreviousCloudTriggered", &in_return_previous_cloud_trigger);
+
+	// Register "main" storage management method.
 	registerHandler("update_storage", boost::bind(&CloudStorage::update_storage, this));
 	addDependency("update_storage", NULL);
+
 }
 
 bool CloudStorage::onInit() {
@@ -112,6 +120,19 @@ void CloudStorage::onClearStorageButtonPressed(){
 }
 
 
+void CloudStorage::onReturnPreviousButtonPressed(){
+	CLOG(LDEBUG) << "CloudStorage::onReturnPreviousButtonPressed";
+	return_previous_cloud_flag = true;
+}
+
+void CloudStorage::onReturnPreviousCloudTriggered(){
+	CLOG(LDEBUG) << "CloudStorage::onReturnPreviousCloudTriggered";
+	in_return_previous_cloud_trigger.read();
+	return_previous_cloud_flag = true;
+}
+
+
+
 void CloudStorage::update_storage(){
 	CLOG(LTRACE) << "CloudStorage::update_storage";
 
@@ -152,6 +173,9 @@ void CloudStorage::update_storage(){
 
 	// Publish cloud merged from currently possesed ones.
 	publish_merged_clouds();
+
+	// Return previous (single or merged) cloud.
+	return_previous_cloud();
 }
 
 
@@ -238,7 +262,7 @@ void  CloudStorage::publish_merged_clouds(){
 
 
 	// Merge XYZ cloud - but earlier check size of vector of transformations.
-	if (transformations.size() != clouds_xyz.size()) {
+/*	if (transformations.size() != clouds_xyz.size()) {
 		CLOG(LINFO) << "Sizes of transformation and clouds_xyz vectors differ!";
 	} else {
 		for (int i = 0 ; i < transformations.size(); i++) {
@@ -252,7 +276,7 @@ void  CloudStorage::publish_merged_clouds(){
 		// Return merged cloud.
 		CLOG(LINFO) << "merged_cloud_xyz->size(): "<< merged_cloud_xyz->size();
 		out_cloud_xyz.write(merged_cloud_xyz);
-	}//: else
+	}//: else*/
 
 
 	// Merge XYZRGB cloud - but earlier check size of vector of transformations.
@@ -261,18 +285,36 @@ void  CloudStorage::publish_merged_clouds(){
 	} else {
 		for (int i = 0 ; i < transformations.size(); i++) {
 			// Get cloud.
-			pcl::PointCloud<pcl::PointXYZRGB> tmp = *(clouds_xyzrgb[i]);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
 			// Transform it.
-			pcl::transformPointCloud(tmp, tmp, transformations[i].getElements());
+			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
 			// Add to merged cloud.
-			*merged_cloud_xyzrgb += tmp;
+			*merged_cloud_xyzrgb += *trans_tmp;
 		}
 		// Return merged cloud.
 		CLOG(LINFO) << "merged_cloud_xyzrgb->size(): "<< merged_cloud_xyzrgb->size();
 		out_cloud_xyzrgb.write(merged_cloud_xyzrgb);
 	}//: else
 
+}
 
+void  CloudStorage::return_previous_cloud(){
+	CLOG(LTRACE) << "CloudStorage::return_previous_cloud";
+	
+	if (transformations.size() != clouds_xyzrgb.size()) {
+		CLOG(LINFO) << "Sizes of transformation and clouds_xyzrgb vectors differ!";
+	} else {
+		int i = transformations.size()-1;
+		// Get previous (n-1) cloud.
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
+		// Transform it.
+		pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
+
+		// Return previous cloud.
+		out_previous_cloud_xyzrgb.write(trans_tmp);
+	}//: else
 }
 
 

@@ -200,7 +200,7 @@
 			<sink>DepthSequence.in_next_image_trigger</sink>
 <!--			<sink>RGBSequence.in_stream_trigger</sink>
 			<sink>DepthSequence.in_stream_trigger</sink>-->
-			<sink>PairwiseRegistration.in_store_previous_cloud_trigger</sink>
+			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 		</Source>
 
@@ -308,6 +308,10 @@
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>
+		</Source>
+
+		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
+			<sink>PairwiseRegistration.in_previous_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">

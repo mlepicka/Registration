@@ -76,7 +76,6 @@ public:
 
 PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 	Base::Component(name),
-	prop_store_first_cloud("StoreFirstCloud",true),
 	prop_ICP("Mode.ICP",true),
 	prop_ICP_MaxCorrespondenceDistance("ICP.MaxCorrespondenceDistance",0.05),
 	prop_ICP_MaximumIterations("ICP.MaximumIterations",50),
@@ -85,8 +84,6 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 	prop_ICP_colour("ICP.UseColour",true),
 	prop_ICP_normals("ICP.UseNormals",true)
 {
-	// Register properties.
-	registerProperty(prop_store_first_cloud);
 	// Register ICP properties.
 	registerProperty(prop_ICP);
 	registerProperty(prop_ICP_MaxCorrespondenceDistance);
@@ -104,9 +101,9 @@ PairwiseRegistration::~PairwiseRegistration() {
 
 void PairwiseRegistration::prepareInterface() {
 	// Register data streams.
-	registerStream("in_cloud_xyz", &in_cloud_xyz);
+//	registerStream("in_cloud_xyz", &in_cloud_xyz); : TODO
 	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
-	registerStream("in_store_previous_cloud_trigger", &in_store_previous_cloud_trigger);
+	registerStream("in_previous_cloud_xyzrgb", &in_previous_cloud_xyzrgb);
 	registerStream("out_transformation_xyz", &out_transformation_xyz);
 	registerStream("out_transformation_xyzrgb", &out_transformation_xyzrgb);
 
@@ -116,23 +113,12 @@ void PairwiseRegistration::prepareInterface() {
 
 	registerHandler("pairwise_registration_xyzrgb", boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb, this));
 	addDependency("pairwise_registration_xyzrgb", &in_cloud_xyzrgb);
-
-	// Register button-triggered handlers.
-	registerHandler("Store previous cloud", boost::bind(&PairwiseRegistration::onStorePreviousButtonPressed, this));
-
-	// Register externally-triggered handler.
-	registerHandler("onStorePreviousCloudTriggered", boost::bind(&PairwiseRegistration::onStorePreviousCloudTriggered, this));
-	addDependency("onStorePreviousCloudTriggered", &in_store_previous_cloud_trigger);
 }
 
 bool PairwiseRegistration::onInit() {
 	// Init prev cloud.
 	previous_cloud_xyzrgb = pcl::PointCloud<pcl::PointXYZRGB>::Ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
-	// Init flag.
-	if (prop_store_first_cloud)
-		store_previous_cloud_flag = true;
-	else
-		store_previous_cloud_flag = false;
+
 	return true;
 }
 
@@ -148,18 +134,6 @@ bool PairwiseRegistration::onStart() {
 	return true;
 }
 
-void PairwiseRegistration::onStorePreviousButtonPressed(){
-	CLOG(LDEBUG) << "PairwiseRegistration::onStorePreviousButtonPressed";
-	store_previous_cloud_flag = true;
-}
-
-void PairwiseRegistration::onStorePreviousCloudTriggered(){
-	CLOG(LDEBUG) << "PairwiseRegistration::onStorePreviousCloudTriggered";
-	in_store_previous_cloud_trigger.read();
-	store_previous_cloud_flag = true;
-}
-
-
 void  PairwiseRegistration::pairwise_registration_xyz(){
 	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyz";
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = in_cloud_xyz.read();
@@ -174,15 +148,24 @@ void  PairwiseRegistration::pairwise_registration_xyz(){
 
 void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyzrgb";
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb = in_cloud_xyzrgb.read();
 	// Temporary variable storing the resulting transformation.
 	Types::HomogMatrix result;
+	// Read current cloud from port.
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb = in_cloud_xyzrgb.read();
 
+	// Check whether previous cloud is received.
+	if (!in_previous_cloud_xyzrgb.empty()) {
+		CLOG(LINFO) << "Storing cloud as previous";
+		previous_cloud_xyzrgb = in_previous_cloud_xyzrgb.read();
+		// pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+	}//: if
+
+	// TODO: DEBUG - remove.
 	CLOG(LERROR) << "Current cloud size:" << cloud_xyzrgb->size();
 	if (!previous_cloud_xyzrgb->empty ())
 			CLOG(LERROR) << "Previous cloud size:" << previous_cloud_xyzrgb->size();
 
-	/// Previous cloud empty - initialization.
+	/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
 	if (previous_cloud_xyzrgb->empty () || !prop_ICP) {
 		// Return identity matrix.
 		CLOG(LINFO) << "ICP refinement not used";
@@ -190,7 +173,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	} else {
 		// Perform pairwise registration.
 		if (prop_ICP_colour && prop_ICP_normals) {
-			CLOG(LINFO) << "Using ICP with colour and normals for registration refinement";
+			CLOG(LINFO) << "Using ICP with colour and normals for pairwise registration";
 
 			// Compute surface normals.
 			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normal (new pcl::PointCloud<pcl::Normal>);
@@ -251,7 +234,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			out_transformation_xyzrgb.write(result);
 
 		} else if (prop_ICP_normals) {
-			CLOG(LINFO) << "Using ICP with normals for registration refinement";
+			CLOG(LINFO) << "Using ICP with normals for pairwise registration";
 
 
 			// Compute surface normals.
@@ -341,7 +324,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			result.setElements(icp_trans.inverse());
 			out_transformation_xyzrgb.write(result);
 		} else if (prop_ICP_colour) {
-			CLOG(LINFO) << "Using ICP with colour for registration refinement";
+			CLOG(LINFO) << "Using ICP with colour for pairwise registration";
 			// Use ICP with colour to get "better" transformation.
 			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
@@ -376,7 +359,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			out_transformation_xyzrgb.write(result);
 
 		} else {
-			CLOG(LINFO) << "Using stantard ICP for registration refinement";
+			CLOG(LINFO) << "Using stantard ICP for pairwise registration";
 			// Use ICP to get "better" transformation.
 			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
@@ -410,14 +393,6 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 
 	// Return the transformation.
 	out_transformation_xyzrgb.write(result);
-
-	// Store previous cloud.
-	if (store_previous_cloud_flag){
-		CLOG(LINFO) << "Storing cloud as previous";
-		store_previous_cloud_flag = false;
-		// pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
-		pcl::transformPointCloud(*cloud_xyzrgb, *previous_cloud_xyzrgb, result.getElements()) ;
-	}//: if
 }
 
 
