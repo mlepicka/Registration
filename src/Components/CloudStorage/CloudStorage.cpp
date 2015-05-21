@@ -30,6 +30,7 @@ CloudStorage::CloudStorage(const std::string & name) :
 	// Register properties.
 	registerProperty(prop_store_first_cloud);
 	registerProperty(prop_overwrite_last_cloud);
+	registerProperty(prop_return_previous_merged_cloud);
 	registerProperty(prop_clouds_limit);
 	prop_clouds_limit.addConstraint("0");
 	prop_clouds_limit.addConstraint("999");
@@ -307,7 +308,27 @@ void  CloudStorage::return_previous_cloud(){
 
 	if (transformations.size() != clouds_xyzrgb.size()) {
 		CLOG(LINFO) << "Sizes of transformation and clouds_xyzrgb vectors differ!";
+		return;
+	}
+
+	if (prop_return_previous_merged_cloud) {
+		// Return merged cloud.
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_previous (new pcl::PointCloud<pcl::PointXYZRGB>);
+		// Merge all clouds EXCEPT the last (i.e. pairwise registered) one!
+		for (int i = 0 ; i < transformations.size()-1; i++) {
+			// Get cloud.
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
+			// Transform it.
+			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
+			// Add to merged cloud.
+			*merged_previous += *trans_tmp;
+		}
+		// Return merged previous cloud.
+		CLOG(LINFO) << "merged_previous->size(): "<< merged_previous->size();
+		out_previous_cloud_xyzrgb.write(merged_previous);
 	} else {
+		// Return previous cloud.
 		int i = transformations.size()-1;
 		// Get previous (n-1) cloud.
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
