@@ -74,6 +74,7 @@ bool CloudStorage::onInit() {
 	// Init flags.
 	remove_last_cloud_flag = false;
 	clear_storage_flag = false;
+	return_previous_cloud_flag = false;
 
 	if (prop_store_first_cloud)
 		add_cloud_flag = true;
@@ -175,7 +176,8 @@ void CloudStorage::update_storage(){
 	publish_merged_clouds();
 
 	// Return previous (single or merged) cloud.
-	return_previous_cloud();
+	if (return_previous_cloud_flag)
+		return_previous_cloud();
 }
 
 
@@ -301,7 +303,8 @@ void  CloudStorage::publish_merged_clouds(){
 
 void  CloudStorage::return_previous_cloud(){
 	CLOG(LTRACE) << "CloudStorage::return_previous_cloud";
-	
+	return_previous_cloud_flag = false;
+
 	if (transformations.size() != clouds_xyzrgb.size()) {
 		CLOG(LINFO) << "Sizes of transformation and clouds_xyzrgb vectors differ!";
 	} else {

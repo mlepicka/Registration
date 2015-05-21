@@ -22,7 +22,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                                        <param name="auto_trigger">1</param>
+                                        <param name="auto_trigger">0</param>
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
