@@ -106,10 +106,7 @@
 				</Component>
 
 
-<!--				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="20" bump="-2">
-				</Component>-->
-
-				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="23" bump="0">
+				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="30" bump="0">
 				</Component>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -197,6 +194,14 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="Wide2BoardDepthTransformation.out_image_xyz">
+			<sink>Left2WideTransformation.in_image_xyz</sink>
+		</Source>
+
+		<Source name= "Left2WideHMProvider.out_homogMatrix">
+			<sink>Left2WideTransformation.in_homogMatrix</sink>
+		</Source>
+
+		<Source name="Left2WideTransformation.out_image_xyz">
 			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
 		</Source>
 
