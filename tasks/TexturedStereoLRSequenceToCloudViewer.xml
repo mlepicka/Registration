@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Dawid Kaczmarek</name>
+			<link></link>
+		</Author>
+	
+		<Description>
+			<brief>Displays point cloud generated from stereo</brief>
+			<full>Displays point clouds generated from a sequence of stereo-images (LR). Enables writing of point cloud to PCD files.</full>
+		</Description>
+	</Reference>
+
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="ExecDisp" period="2">
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+				</Component>
+
+				<Component name="CameraInfoLeft" type="CvCoreTypes:CameraInfoProvider" priority="2" bump="0">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/left.yml</param>
+
+				</Component>
+				<Component name="CameraInfoRight" type="CvCoreTypes:CameraInfoProvider" priority="3" bump="0">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/right.yml</param>
+				</Component>
+
+
+				<Component name="SequenceLeft" type="CvBasic:Sequence" priority="11" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.pattern">Window1_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">0</param>						
+				</Component>
+				<Component name="SequenceRight" type="CvBasic:Sequence" priority="12" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.pattern">Window0_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">0</param>					
+				</Component>
+
+
+				<Component name="TexturedSequenceLeft" type="CvBasic:Sequence" priority="13" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.pattern">Window1_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">0</param>						
+				</Component>
+				<Component name="TexturedSequenceRight" type="CvBasic:Sequence" priority="14" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.pattern">Window0_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">0</param>					
+				</Component>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Stereo estimation
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="StereoEstimator" type="CvStereo:StereoEstimator" priority="15" bump="0">
+					<param name="minDisparity">260</param>
+					<param name="numberOfDisparities">128</param>
+<!--					<param name="minDisparity">340</param>
+					<param name="numberOfDisparities">432</param>-->
+					<param name="uniquenessRatio">25</param>
+				</Component>
+
+				<Component name="TexturedStereoEstimator" type="CvStereo:StereoEstimator" priority="16" bump="0">
+					<param name="minDisparity">260</param>
+					<param name="numberOfDisparities">128</param>
+<!--					<param name="minDisparity">340</param>
+					<param name="numberOfDisparities">432</param>-->
+					<param name="uniquenessRatio">25</param>
+				</Component>
+
+
+				<Component name="DepthConventer" type="CvStereo:DepthConventer" priority="17" bump="0">
+				</Component>
+
+				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="21" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz</param>
+					<param name="count">2</param>
+					<param name="digits">1</param>
+					<param name="base_name">rgb,xyz</param>
+					<param name="format">png,yml</param>
+					<param name="mode.auto_trigger">0</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+
+		<Subtask name="Display">
+			<Executor name="DisplayExec" period="0.5">
+				<Component name="WindowCloud" type="PCL:CloudViewer" priority="1" bump="0">
+					<param name="window_name">RGBXYZ Cloud</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+	</Subtasks>
+
+
+
+	
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+		<Source name="NextImageTrigger.out_trigger">
+			<sink>SequenceLeft.in_next_image_trigger</sink>
+			<sink>SequenceRight.in_next_image_trigger</sink>
+			<sink>TexturedSequenceLeft.in_next_image_trigger</sink>
+			<sink>TexturedSequenceRight.in_next_image_trigger</sink>
+			<sink>ImageWriter.in_save_trigger</sink>
+		</Source>
+
+		<Source name="CameraInfoLeft.out_camera_info">
+			<sink>StereoEstimator.l_cam_info</sink>
+			<sink>TexturedStereoEstimator.l_cam_info</sink>
+		</Source>
+		<Source name="CameraInfoRight.out_camera_info">
+			<sink>StereoEstimator.r_cam_info</sink>
+			<sink>TexturedStereoEstimator.r_cam_info</sink>
+		</Source>
+
+
+
+		<Source name="SequenceLeft.out_img">
+			<sink>StereoEstimator.l_in_img</sink>
+		</Source>
+		<Source name="SequenceRight.out_img">
+			<sink>StereoEstimator.r_in_img</sink>
+		</Source>
+
+		<Source name="TexturedSequenceLeft.out_img">
+			<sink>TexturedStereoEstimator.l_in_img</sink>
+		</Source>
+		<Source name="TexturedSequenceRight.out_img">
+			<sink>TexturedStereoEstimator.r_in_img</sink>
+		</Source>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Stereo estimation
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="StereoEstimator.out_rgb_stereo">
+			<sink>DepthConventer.in_rgb_stereo</sink>
+			<sink>ImageWriter.in_img0</sink>
+		</Source>
+
+		<Source name="TexturedStereoEstimator.out_depth_xyz">
+			<sink>DepthConventer.in_depth_xyz</sink>
+			<sink>ImageWriter.in_img1</sink>
+		</Source>
+
+
+		<Source name="DepthConventer.out_cloud_xyzrgb">
+			<sink>WindowCloud.in_cloud_xyzrgb</sink>
+		</Source>
+
+	</DataStreams>
+</Task>
+

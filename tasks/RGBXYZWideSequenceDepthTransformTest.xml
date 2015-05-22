@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+		
+		<Description>
+			<brief>RGBXYZSequenceObjectFragmentCollector</brief>
+			<full>Loads colour and XYZ images, localizes reference frame of the board in third sequence, extract mask, transforms them into point clouds from the area represented by the mask, collects them and displays merged point cloud.</full>
+		</Description>
+	</Reference>
+	
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Processing"  period="0.2">
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
+                                        <param name="auto_trigger">0</param>
+				</Component>
+
+				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz/</param>
+					<param name="sequence.pattern">.*_rgb.png</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz/</param>
+					<param name="sequence.pattern">.*_xyz.yml</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_wide/</param>
+					<param name="sequence.pattern">Window2_.*\.png</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+				<Component name="WideCameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="5">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/wide.yml</param>
+				</Component>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Board pose estimation
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="DetectCircles" type="CvBasic:CvFindCirclesGrid" priority="10">
+					<param name="grid.width">3</param>
+					<param name="grid.height">5</param>
+					<param name="grid.size">0.06</param>
+				</Component>
+				
+				<Component name="DetectCirclesInv" type="CvBasic:CvFindCirclesGrid" priority="11">
+					<param name="grid.width">3</param>
+					<param name="grid.height">5</param>
+					<param name="grid.size">0.06</param>
+					<param name="image.inverse">1</param>
+				</Component>
+				<Component name="SolvePNP" type="CvBasic:CvSolvePnP" priority="12">
+					<param name="offset.x">0.075</param>
+					<param name="offset.y">0.233</param>
+					<param name="offset.roll">3.14159265359</param>
+				</Component>
+				<Component name="SolvePNPinv" type="CvBasic:CvSolvePnP" priority="13">
+					<param name="offset.x">0.075</param>
+					<param name="offset.y">-0.113</param>
+					<param name="offset.roll">3.14159265359</param>
+				</Component>
+
+				<Component name="SolveLocation" type="CvBasic:CalcObjectLocation" priority="14" bump="0">
+				</Component>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Extraction of fragment of cloud constituting the object
+<!--------------------------------------------------------------------------------------------------------------------->
+
+<!--				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="20" bump="-2">
+				</Component>-->
+
+				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="23" bump="0">
+				</Component>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Visualization
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="100">
+				</Component>
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,XYZ,Wide</param>
+				</Component>
+
+
+			</Executor>
+		</Subtask>
+		
+	</Subtasks>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- pipes connecting datastreams -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+	
+	<DataStreams>
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+		<Source name="Trigger.out_trigger">
+			<sink>RGBSequence.in_next_image_trigger</sink>
+			<sink>XYZSequence.in_next_image_trigger</sink>
+			<sink>WideRGBSequence.in_next_image_trigger</sink>
+		</Source>
+
+		<Source name="XYZSequence.out_img">
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
+		</Source>	
+	
+		<Source name="RGBSequence.out_img">
+			<sink>Window.in_img0</sink>
+		</Source>
+
+		<Source name="WideRGBSequence.out_img">
+			<sink>DetectCircles.in_img</sink>
+			<sink>DetectCirclesInv.in_img</sink>
+			<sink>Window.in_img2</sink>
+		</Source>
+
+		<Source name="WideCameraInfo.out_camera_info">
+			<sink>SolvePNP.in_camerainfo</sink>
+			<sink>SolvePNPinv.in_camerainfo</sink>
+			<sink>WideDraw.in_camera_matrix</sink>
+		</Source>
+
+		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
+			<sink>Window.in_img1</sink>
+		</Source>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Board pose estimation
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="DetectCircles.out_pattern">
+			<sink>Window.in_draw2</sink>
+			<sink>SolvePNP.in_object3d</sink>		
+		</Source>
+		<Source name="DetectCirclesInv.out_pattern">
+			<sink>Window.in_draw2</sink>
+			<sink>SolvePNPinv.in_object3d</sink>	
+		</Source>
+
+		<Source name = "SolvePNPinv.out_homogMatrix">
+			<sink>SolveLocation.in_homogMatrix</sink>
+		</Source>
+		<Source name= "SolvePNP.out_homogMatrix">
+			<sink>SolveLocation.in_homogMatrix</sink>
+		</Source>
+
+		<Source name= "SolveLocation.out_homogMatrix">
+			<sink>WideDraw.in_homogMatrix</sink>
+<!--			<sink>DepthTransform.in_homogMatrix</sink>-->
+		</Source>
+
+		<Source name="WideDraw.out_csystem">
+			<sink>Window.in_draw2</sink>		
+		</Source>
+
+	</DataStreams>
+</Task>
+
+
+
+
