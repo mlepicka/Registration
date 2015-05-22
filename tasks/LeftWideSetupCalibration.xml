@@ -1,0 +1,208 @@
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+		
+		<Description>
+			<brief>Registration/LeftWideSetupCalibration</brief>
+			<full>Task for calibration of dual-camera setup</full>	
+		</Description>
+	</Reference>
+	
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Exec1"  period="0.1">
+
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+                                        <param name="auto_trigger">0</param>
+				</Component>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Left camera 
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="LeftCameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="2" bump="0">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/left.yml</param>
+
+				</Component>
+
+				<Component name="LeftRGBSequence" type="CvBasic:Sequence" priority="3" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/kalib/</param>
+					<param name="sequence.pattern">Window1_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_image">0</param>						
+				</Component>
+
+				<Component name="LeftColorConv" type="CvBasic:CvColorConv" priority="4" bump="0">
+					<param name="type">BGR2GRAY</param>
+				</Component>
+
+				<Component name="LeftChessboard" type="CvBasic:CvFindChessboardCorners" priority="5" bump="0">
+					<param name="chessboard.board_width">6</param>
+					<param name="chessboard.board_height">4</param>
+					<param name="chessboard.square_width">0.02</param>
+					<param name="chessboard.square_height">0.02</param>
+				</Component>
+
+				<Component name="LeftSolvePNP" type="CvBasic:CvSolvePnP" priority="6">
+					<param name="offset.x">-0.1</param>
+					<param name="offset.y">-0.06</param>
+					<param name="offset.roll">3.14159265359</param>
+					<param name="offset.pitch">3.14159265359</param>
+				</Component>
+
+				<Component name="LeftDraw" type="CvBasic:DrawCoordinateSystem" priority="7">
+				</Component>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Wide camera 
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="WideCameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="11">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/wide.yml</param>
+				</Component>
+
+				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="12" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/kalib/</param>
+					<param name="sequence.pattern">Window2_.*\.png</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+<!--				<Component name="WideRotateImage" type="CvBasic:RotateImage" priority="14" bump="0">
+					<param name="angle">180</param>
+				</Component>-->
+
+
+				<Component name="WideColorConv" type="CvBasic:CvColorConv" priority="15" bump="0">
+					<param name="type">BGR2GRAY</param>
+				</Component>
+
+				<Component name="WideChessboard" type="CvBasic:CvFindChessboardCorners" priority="16" bump="0">
+					<param name="chessboard.board_width">6</param>
+					<param name="chessboard.board_height">4</param>
+					<param name="chessboard.square_width">0.02</param>
+					<param name="chessboard.square_height">0.02</param>
+				</Component>
+
+				<Component name="WideSolvePNP" type="CvBasic:CvSolvePnP" priority="17">
+<!--					<param name="offset.x">0.075</param>
+					<param name="offset.y">0.233</param>
+					<param name="offset.roll">3.14159265359</param>-->
+				</Component>
+
+				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="18">
+				</Component>
+
+			</Executor>
+		</Subtask>
+		
+		<Subtask name="Visualisation">
+			<Executor name="Exec2" period="0.2">
+				<Component name="Window" type="CvBasic:CvWindow" priority="1" bump="0">
+					<param name="count">2</param>
+					<param name="title">Left,Wide</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+	
+	</Subtasks>
+	
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- pipes connecting datastreams -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+	<DataStreams>
+
+		<Source name="NextImageTrigger.out_trigger">
+			<sink>LeftRGBSequence.in_next_image_trigger</sink>
+			<sink>WideRGBSequence.in_next_image_trigger</sink>
+		</Source>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Left camera 
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="LeftCameraInfo.out_camera_info">
+			<sink>LeftSolvePNP.in_camerainfo</sink>
+			<sink>LeftDraw.in_camera_matrix</sink>
+		</Source>
+
+		<Source name="LeftRGBSequence.out_img">
+			<sink>LeftColorConv.in_img</sink>
+			<sink>Window.in_img0</sink>		
+		</Source>
+
+		<Source name="LeftColorConv.out_img">
+			<sink>LeftChessboard.in_img</sink>
+		</Source>
+
+		<Source name="LeftChessboard.out_chessboard">
+			<sink>LeftSolvePNP.in_object3d</sink>	
+			<sink>Window.in_draw0</sink>
+		</Source>
+
+		<Source name= "LeftSolvePNP.out_homogMatrix">
+			<sink>LeftDraw.in_homogMatrix</sink>
+		</Source>
+
+		<Source name="LeftDraw.out_csystem">
+			<sink>Window.in_draw0</sink>		
+		</Source>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Wide camera 
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="WideCameraInfo.out_camera_info">
+			<sink>WideSolvePNP.in_camerainfo</sink>
+			<sink>WideDraw.in_camera_matrix</sink>
+		</Source>
+
+		<Source name="WideRGBSequence.out_img">
+<!--			<sink>WideRotateImage.in_img</sink> -->
+			<sink>WideColorConv.in_img</sink>
+			<sink>Window.in_img1</sink>		
+		</Source>
+
+
+<!--		<Source name="WideRotateImage.out_img">
+			<sink>WideColorConv.in_img</sink>
+			<sink>Window.in_img1</sink>		
+		</Source>-->
+
+		<Source name="WideColorConv.out_img">
+			<sink>WideChessboard.in_img</sink>
+		</Source>
+
+		<Source name="WideChessboard.out_chessboard">
+			<sink>WideSolvePNP.in_object3d</sink>	
+			<sink>Window.in_draw1</sink>
+		</Source>
+
+		<Source name= "WideSolvePNP.out_homogMatrix">
+			<sink>WideDraw.in_homogMatrix</sink>
+		</Source>
+
+		<Source name="WideDraw.out_csystem">
+			<sink>Window.in_draw1</sink>		
+		</Source>
+
+
+	</DataStreams>
+</Task>
+
+
+
+
