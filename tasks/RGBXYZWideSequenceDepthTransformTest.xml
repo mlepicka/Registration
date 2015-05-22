@@ -18,6 +18,7 @@
 <!-- task definition -->
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--------------------------------------------------------------------------------------------------------------------->
+
 	<Subtasks>
 		<Subtask name="Processing">
 			<Executor name="Processing"  period="1">
@@ -56,7 +57,7 @@
 
 
 <!--------------------------------------------------------------------------------------------------------------------->
-<!--                                     Board pose estimation
+<!--                                     Board pose estimation in wide camera
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="DetectCircles" type="CvBasic:CvFindCirclesGrid" priority="10">
@@ -88,6 +89,22 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Extraction of fragment of cloud constituting the object
 <!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="Wide2BoardDepthTransformation" type="CvStereo:DepthTransform" priority="20" bump="0">
+				</Component>
+
+				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="21" bump="0">
+					<param name="offset.x">0.02911883</param>
+					<param name="offset.y">-0.09980362</param>
+					<param name="offset.z">-0.008533</param>
+					<param name="offset.roll">0.129040725146</param>
+					<param name="offset.pitch">0.309154980546</param>
+					<param name="offset.yaw">3.09886863378</param>
+				</Component>
+
+				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="22" bump="0">
+				</Component>
+
 
 <!--				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="20" bump="-2">
 				</Component>-->
@@ -130,7 +147,8 @@
 		</Source>
 
 		<Source name="XYZSequence.out_img">
-			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
+<!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>-->
+			<sink>Wide2BoardDepthTransformation.in_image_xyz</sink>
 		</Source>	
 	
 		<Source name="RGBSequence.out_img">
@@ -147,10 +165,6 @@
 			<sink>SolvePNP.in_camerainfo</sink>
 			<sink>SolvePNPinv.in_camerainfo</sink>
 			<sink>WideDraw.in_camera_matrix</sink>
-		</Source>
-
-		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
-			<sink>Window.in_img1</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -175,8 +189,26 @@
 
 		<Source name= "SolveLocation.out_homogMatrix">
 			<sink>WideDraw.in_homogMatrix</sink>
-<!--			<sink>DepthTransform.in_homogMatrix</sink>-->
+			<sink>Wide2BoardDepthTransformation.in_homogMatrix</sink>
 		</Source>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Extraction of fragment of cloud constituting the object
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="Wide2BoardDepthTransformation.out_image_xyz">
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
+		</Source>
+
+		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
+			<sink>Window.in_img1</sink>
+		</Source>
+
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Visualization
+<!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="WideDraw.out_csystem">
 			<sink>Window.in_draw2</sink>		

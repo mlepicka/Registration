@@ -13,7 +13,12 @@
 		</Description>
 	</Reference>
 	
-	<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+
 	<Subtasks>
 		<Subtask name="Processing">
 			<Executor name="Processing"  period="0.2">
@@ -26,8 +31,8 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>-->
-					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
+<!--					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>-->
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -35,8 +40,8 @@
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>-->
-					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
+<!--					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>-->
 					<param name="sequence.pattern">.*_depth.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -97,7 +102,7 @@
 					<param name="GreenAxis(Y).Y_Max">0.25</param>
 					<param name="GreenAxis(Y).Y_Min">-0.25</param>
 					<param name="RedAxis(Z).Z_Max">0.6</param>
-					<param name="RedAxis(Z).Z_Min">-0.015</param>
+					<param name="RedAxis(Z).Z_Min">0.015</param>
 				</Component>
 
 				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="22" bump="0">
@@ -171,27 +176,14 @@
 	
 	</Subtasks>
 
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- pipes connecting datastreams -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
-	<!-- pipes connecting datastreams -->
 	<DataStreams>
+
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Sources
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -200,7 +192,7 @@
 			<sink>DepthSequence.in_next_image_trigger</sink>
 <!--			<sink>RGBSequence.in_stream_trigger</sink>
 			<sink>DepthSequence.in_stream_trigger</sink>-->
-			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>
+<!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>-->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 		</Source>
 

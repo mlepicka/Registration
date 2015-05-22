@@ -70,6 +70,56 @@ def generate_random_data():
 	return (A,B,n)
 	
 
+# Compute Euler angles from rotation matrix
+def euler_from_matrix(matrix):
+        """Return Euler angles (syxz) from rotation matrix for specified axis sequence.
+        :Author:
+          `Christoph Gohlke <http://www.lfd.uci.edu/~gohlke/>`_
+
+        full library with coplete set of euler triplets (combinations of  s/r x-y-z) at
+            http://www.lfd.uci.edu/~gohlke/code/transformations.py.html
+
+        Note that many Euler angle triplets can describe one matrix.
+        """
+        # epsilon for testing whether a number is close to zero
+        _EPS = finfo(float).eps * 5.0
+
+        # axis sequences for Euler angles
+        _NEXT_AXIS = [1, 2, 0, 1]
+        firstaxis, parity, repetition, frame = (1, 1, 0, 0) # ''
+
+        i = firstaxis
+        j = _NEXT_AXIS[i+parity]
+        k = _NEXT_AXIS[i-parity+1]
+
+        M = array(matrix, dtype='float', copy=False)[:3, :3]
+        if repetition:
+            sy = sqrt(M[i, j]*M[i, j] + M[i, k]*M[i, k])
+            if sy > _EPS:
+                ax = arctan2( M[i, j],  M[i, k])
+                ay = arctan2( sy,       M[i, i])
+                az = arctan2( M[j, i], -M[k, i])
+            else:
+                ax = arctan2(-M[j, k],  M[j, j])
+                ay = arctan2( sy,       M[i, i])
+                az = 0.0
+        else:
+            cy = sqrt(M[i, i]*M[i, i] + M[j, i]*M[j, i])
+            if cy > _EPS:
+                ax = arctan2( M[k, j],  M[k, k])
+                ay = arctan2(-M[k, i],  cy)
+                az = arctan2( M[j, i],  M[i, i])
+            else:
+                ax = arctan2(-M[j, k],  M[j, j])
+                ay = arctan2(-M[k, i],  cy)
+                az = 0.0
+
+        if parity:
+            ax, ay, az = -ax, -ay, -az
+        if frame:
+            ax, az = az, ax
+        return ax, ay, az
+
 # Calibration data.
 def calibration_data():
 	left_camera_points = mat(random.rand(4,3));
@@ -157,4 +207,10 @@ print ""
 
 print "RMSE:", rmse
 print "If RMSE is near zero, the function is correct!"
+
+(ax, ay, az) = euler_from_matrix(ret_R)
+
+print "Euler angles"
+print ax, ay, az
+print ""
 
