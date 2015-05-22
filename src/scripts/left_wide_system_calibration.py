@@ -37,7 +37,7 @@ def rigid_transform_3D(A, B):
 
     return R, t
 
-# Test with random data
+# Generate random data - for testin purposes.
 def generate_random_data():
 	# Random rotation and translation
 	R = mat(random.rand(3,3));
@@ -70,9 +70,21 @@ def generate_random_data():
 	return (A,B,n)
 	
 
+# Calibration data.
+def calibration_data():
+	wide_camera_points = [[0,0,0],[0,0,0],[0,0,0],[0,0,0]]
+	left_camera_points = [
+  [-0.25044866060156884, -0.9546185621785377, -0.018138013520308777],
+  [-0.24596613638511766, -0.5327159784677284, -0.011456858189483443],
+  [0.13391378309697685, -0.538782060922628, -0.010241241006622825],
+  [0.1329034831779668, -0.9629397324626949, -0.013050991573856863]]
+
+	return (wide_camera_points,left_camera_points,4)
 
 # MAIN
-(A,B,n) = generate_random_data();
+#(A,B,n) = generate_random_data()
+(A,B,n) = calibration_data()
+
 
 # recover the transformation
 ret_R, ret_t = rigid_transform_3D(A, B);
