@@ -91,12 +91,12 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="20" bump="0">
 <!-- (l1*w1^(-1)) -->
-					<param name="offset.x"> 0.0419</param>
+<!--					<param name="offset.x"> 0.0419</param>
 					<param name="offset.y"> -0.1487</param>
 					<param name="offset.z"> 0.0127</param>
 					<param name="offset.roll"> 0.3105</param>
 					<param name="offset.pitch"> 0.1211</param>
-					<param name="offset.yaw"> 3.1342</param>
+					<param name="offset.yaw"> 3.1342</param>-->
 
 <!-- (w1*l1^(-1)) -->
 <!--					<param name="offset.x"> 0.0442</param>
@@ -107,13 +107,29 @@
 					<param name="offset.yaw"> -3.0974</param> -->
 
 <!-- besl & mckay (l*w^(-1)) - mimo że niewłaściwa macierze rotacji! -->
-					<param name="offset.x"> 0.0436735</param>
+<!--					<param name="offset.x"> 0.0436735</param>
 					<param name="offset.y"> -0.14970411</param>
 					<param name="offset.z"> 0.0127996</param>
 					<param name="offset.roll"> 0.3116</param>
 					<param name="offset.pitch"> 0.1229</param>
-					<param name="offset.yaw"> 3.1383</param>
+					<param name="offset.yaw"> 3.1383</param>-->
     
+<!-- besl & mckay matlab (l*w^(-1))  -->
+					<param name="offset.x"> 0.043673504588334</param>
+					<param name="offset.y"> -0.149704105477945</param>
+					<param name="offset.z"> 0.012799597725646</param>
+					<param name="offset.roll"> 0.311581381946338</param>
+					<param name="offset.pitch"> 0.122885263787319</param>
+					<param name="offset.yaw"> 3.138322878121028</param>
+  
+<!-- besl & mckay matlab (w*l^(-1)) ZŁE -->
+<!--					<param name="offset.x"> 0.045398668455971</param>
+					<param name="offset.y"> -0.144593943002057</param>
+					<param name="offset.z"> 0.038911135314459</param>
+					<param name="offset.roll"> 0.314160724927050</param>
+					<param name="offset.pitch"> 0.115930661008144</param>
+					<param name="offset.yaw"> -3.100616598583211</param>   -->
+
 				</Component>
 
 				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
