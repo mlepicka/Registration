@@ -69,16 +69,16 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="StereoEstimator" type="CvStereo:StereoEstimator" priority="15" bump="0">
-					<param name="minDisparity">260</param>
-					<param name="numberOfDisparities">128</param>
+					<param name="minDisparity">80</param>
+					<param name="numberOfDisparities">160</param>
 <!--					<param name="minDisparity">340</param>
 					<param name="numberOfDisparities">432</param>-->
 					<param name="uniquenessRatio">25</param>
 				</Component>
 
 				<Component name="TexturedStereoEstimator" type="CvStereo:StereoEstimator" priority="16" bump="0">
-					<param name="minDisparity">260</param>
-					<param name="numberOfDisparities">128</param>
+					<param name="minDisparity">80</param>
+					<param name="numberOfDisparities">160</param>
 <!--					<param name="minDisparity">340</param>
 					<param name="numberOfDisparities">432</param>-->
 					<param name="uniquenessRatio">25</param>
@@ -96,14 +96,23 @@
 					<param name="format">png,yml</param>
 					<param name="mode.auto_trigger">0</param>
 				</Component>
+
+				<Component name="DepthRainbow" type="CvStereo:DepthRainbow" priority="23" bump="0">
+				</Component>
+
 			</Executor>
 		</Subtask>	
 
 		<Subtask name="Display">
 			<Executor name="DisplayExec" period="1">
-				<Component name="WindowCloud" type="PCL:CloudViewer" priority="1" bump="0">
+				<Component name="WindowCloud" type="PCL:CloudViewer" priority="100" bump="0">
 					<param name="window_name">RGBXYZ Cloud</param>
 				</Component>
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">2</param>
+					<param name="title">rgb, xyz-rainbow</param>
+				</Component>
+
 			</Executor>
 		</Subtask>	
 	</Subtasks>
@@ -159,13 +168,19 @@
 		<Source name="StereoEstimator.out_rgb_stereo">
 			<sink>DepthConventer.in_rgb_stereo</sink>
 			<sink>ImageWriter.in_img0</sink>
+			<sink>Window.in_img0</sink>
 		</Source>
 
 		<Source name="TexturedStereoEstimator.out_depth_xyz">
 			<sink>DepthConventer.in_depth_xyz</sink>
 			<sink>ImageWriter.in_img1</sink>
+			<sink>DepthRainbow.in_depth_xyz</sink>
 		</Source>
 
+
+		<Source name="DepthRainbow.out_depth_rainbow">
+			<sink>Window.in_img1</sink>
+		</Source>
 
 		<Source name="DepthConventer.out_cloud_xyzrgb">
 			<sink>WindowCloud.in_cloud_xyzrgb</sink>

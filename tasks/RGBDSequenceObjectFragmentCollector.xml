@@ -210,8 +210,8 @@
 		<Source name="CameraInfo.out_camera_info">
 			<sink>D2XYZConverter.in_camera_info</sink>
 <!--			<sink>RGBXYZM2PCConverter.in_camera_info</sink>	NIEPOTRZEBNE! -->
-			<sink>SolvePNP.in_camerainfo</sink>
-			<sink>SolvePNPinv.in_camerainfo</sink>
+			<sink>SolvePNP.in_camera_info</sink>
+			<sink>SolvePNPinv.in_camera_info</sink>
 <!--			<sink>Draw.in_camera_matrix</sink> DRAW-->
 		</Source>
 

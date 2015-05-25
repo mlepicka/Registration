@@ -89,21 +89,43 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Extraction of fragment of cloud constituting the object
 <!--------------------------------------------------------------------------------------------------------------------->
+				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="20" bump="0">
+<!-- (l1*w1^(-1)) -->
+					<param name="offset.x"> 0.0419</param>
+					<param name="offset.y"> -0.1487</param>
+					<param name="offset.z"> 0.0127</param>
+					<param name="offset.roll"> 0.3105</param>
+					<param name="offset.pitch"> 0.1211</param>
+					<param name="offset.yaw"> 3.1342</param>
 
-				<Component name="Wide2BoardDepthTransformation" type="CvStereo:DepthTransform" priority="20" bump="0">
+<!-- (w1*l1^(-1)) -->
+<!--					<param name="offset.x"> 0.0442</param>
+					<param name="offset.y"> -0.1436</param>
+					<param name="offset.z"> 0.0383</param>
+					<param name="offset.roll"> 0.3134</param>
+					<param name="offset.pitch"> 0.1130</param>
+					<param name="offset.yaw"> -3.0974</param> -->
+
+<!-- besl & mckay (l*w^(-1)) - mimo że niewłaściwa macierze rotacji! -->
+					<param name="offset.x"> 0.0436735</param>
+					<param name="offset.y"> -0.14970411</param>
+					<param name="offset.z"> 0.0127996</param>
+					<param name="offset.roll"> 0.3116</param>
+					<param name="offset.pitch"> 0.1229</param>
+					<param name="offset.yaw"> 3.1383</param>
+    
 				</Component>
 
-				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="21" bump="0">
-					<param name="offset.x">0.02911883</param>
-					<param name="offset.y">-0.09980362</param>
-					<param name="offset.z">-0.008533</param>
-					<param name="offset.roll">0.129040725146</param>
-					<param name="offset.pitch">0.309154980546</param>
-					<param name="offset.yaw">3.09886863378</param>
+				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
 				</Component>
 
-				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="22" bump="0">
+
+				<Component name="tmpWide2BoardeHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="22" bump="0">
 				</Component>
+
+				<Component name="Wide2BoardTransformation" type="CvStereo:DepthTransform" priority="23" bump="0">
+				</Component>
+
 
 
 				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="30" bump="0">
@@ -121,10 +143,21 @@
 					<param name="title">RGB,XYZ,Wide</param>
 				</Component>
 
+				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="102" bump="0">
+				</Component>
 
 			</Executor>
 		</Subtask>
 		
+		<Subtask name="Visualisation">
+			<Executor name="Exec2" period="0.2">
+				<Component name="Viewer" type="PCL:CloudViewer" priority="1" bump="0">
+					<param name="title">Model point cloud</param>
+                                        <param name="coordinate_system">1</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+
 	</Subtasks>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -145,10 +178,13 @@
 
 		<Source name="XYZSequence.out_img">
 <!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>-->
-			<sink>Wide2BoardDepthTransformation.in_image_xyz</sink>
+<!--			<sink>Wide2BoardTransformation.in_image_xyz</sink>-->
+			<sink>Left2WideTransformation.in_image_xyz</sink>
+<!--			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>-->
 		</Source>	
 	
 		<Source name="RGBSequence.out_img">
+			<sink>RGBXYZM2PCConverter.in_color</sink>
 			<sink>Window.in_img0</sink>
 		</Source>
 
@@ -159,8 +195,8 @@
 		</Source>
 
 		<Source name="WideCameraInfo.out_camera_info">
-			<sink>SolvePNP.in_camerainfo</sink>
-			<sink>SolvePNPinv.in_camerainfo</sink>
+			<sink>SolvePNP.in_camera_info</sink>
+			<sink>SolvePNPinv.in_camera_info</sink>
 			<sink>WideDraw.in_camera_matrix</sink>
 		</Source>
 
@@ -186,24 +222,31 @@
 
 		<Source name= "SolveLocation.out_homogMatrix">
 			<sink>WideDraw.in_homogMatrix</sink>
-			<sink>Wide2BoardDepthTransformation.in_homogMatrix</sink>
+			<sink>Wide2BoardTransformation.in_homogMatrix</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Extraction of fragment of cloud constituting the object
 <!--------------------------------------------------------------------------------------------------------------------->
 
-		<Source name="Wide2BoardDepthTransformation.out_image_xyz">
-			<sink>Left2WideTransformation.in_image_xyz</sink>
-		</Source>
-
 		<Source name= "Left2WideHMProvider.out_homogMatrix">
 			<sink>Left2WideTransformation.in_homogMatrix</sink>
 		</Source>
 
 		<Source name="Left2WideTransformation.out_image_xyz">
-			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
+			<sink>Wide2BoardTransformation.in_image_xyz</sink>
 		</Source>
+
+
+		<Source name= "tmpWide2BoardeHMProvider.out_homogMatrix">
+<!--			<sink>Wide2BoardTransformation.in_homogMatrix</sink>-->
+		</Source>
+
+		<Source name="Wide2BoardTransformation.out_image_xyz">
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
+			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
+		</Source>
+
 
 		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
 			<sink>Window.in_img1</sink>
@@ -215,8 +258,13 @@
 <!--                              Visualization
 <!--------------------------------------------------------------------------------------------------------------------->
 
+
 		<Source name="WideDraw.out_csystem">
 			<sink>Window.in_draw2</sink>		
+		</Source>
+
+		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb</sink>
 		</Source>
 
 	</DataStreams>

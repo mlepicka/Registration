@@ -31,7 +31,6 @@
 
 				<Component name="LeftCameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="2" bump="0">
 					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/left.yml</param>
-
 				</Component>
 
 				<Component name="LeftRGBSequence" type="CvBasic:Sequence" priority="3" bump="0">
@@ -39,27 +38,34 @@
 					<param name="sequence.pattern">Window1_.*\.png</param>
 					<param name="mode.loop">1</param>
 					<param name="mode.auto_next_image">0</param>						
+                                        <param name="mode.auto_streaming">0</param>
 				</Component>
 
-				<Component name="LeftColorConv" type="CvBasic:CvColorConv" priority="4" bump="0">
+<!--				<Component name="LeftUndistort" type="CvBasic:CvUndistort" priority="4" bump="0">
+					<param name="stereo">1</param>
+				</Component>-->
+
+				<Component name="LeftColorConv" type="CvBasic:CvColorConv" priority="5" bump="0">
 					<param name="type">BGR2GRAY</param>
 				</Component>
 
-				<Component name="LeftChessboard" type="CvBasic:CvFindChessboardCorners" priority="5" bump="0">
+				<Component name="LeftChessboard" type="CvBasic:CvFindChessboardCorners" priority="6" bump="0">
 					<param name="chessboard.board_width">6</param>
 					<param name="chessboard.board_height">4</param>
-					<param name="chessboard.square_width">0.02</param>
-					<param name="chessboard.square_height">0.02</param>
+					<param name="chessboard.square_width">0.03</param>
+					<param name="chessboard.square_height">0.03</param>
 				</Component>
 
-				<Component name="LeftSolvePNP" type="CvBasic:CvSolvePnP" priority="6">
-					<param name="offset.x">-0.1</param>
-					<param name="offset.y">-0.06</param>
+				<Component name="LeftSolvePNP" type="CvBasic:CvSolvePnP" priority="7" bump="1">
+					<param name="offset.x">-0.15</param>
+					<param name="offset.y">-0.09</param>
 					<param name="offset.roll">3.14159265359</param>
 					<param name="offset.pitch">3.14159265359</param>
+					<param name="rectified">0</param>
 				</Component>
 
-				<Component name="LeftDraw" type="CvBasic:DrawCoordinateSystem" priority="7">
+				<Component name="LeftDraw" type="CvBasic:DrawCoordinateSystem" priority="8">
+					<param name="rectified">0</param>
 				</Component>
 
 
@@ -76,11 +82,13 @@
 					<param name="sequence.pattern">Window2_.*\.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
+                                        <param name="mode.auto_streaming">0</param>
 				</Component>
 
-<!--				<Component name="WideRotateImage" type="CvBasic:RotateImage" priority="14" bump="0">
-					<param name="angle">180</param>
+<!--				<Component name="WideUndistort" type="CvBasic:CvUndistort" priority="13" bump="0">
+					<param name="stereo">1</param>
 				</Component>-->
+
 
 
 				<Component name="WideColorConv" type="CvBasic:CvColorConv" priority="15" bump="0">
@@ -90,30 +98,32 @@
 				<Component name="WideChessboard" type="CvBasic:CvFindChessboardCorners" priority="16" bump="0">
 					<param name="chessboard.board_width">6</param>
 					<param name="chessboard.board_height">4</param>
-					<param name="chessboard.square_width">0.02</param>
-					<param name="chessboard.square_height">0.02</param>
+					<param name="chessboard.square_width">0.03</param>
+					<param name="chessboard.square_height">0.03</param>
 				</Component>
 
-				<Component name="WideSolvePNP" type="CvBasic:CvSolvePnP" priority="17">
+				<Component name="WideSolvePNP" type="CvBasic:CvSolvePnP" priority="17" bump="1">
 <!--					<param name="offset.x">0.075</param>
 					<param name="offset.y">0.233</param>
 					<param name="offset.roll">3.14159265359</param>-->
+					<param name="rectified">0</param>
 				</Component>
 
 				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="18">
+					<param name="rectified">0</param>
+				</Component>
+				<Component name="Window" type="CvBasic:CvWindow" priority="100" bump="0">
+					<param name="count">2</param>
+					<param name="title">Left,Wide</param>
 				</Component>
 
 			</Executor>
 		</Subtask>
 		
-		<Subtask name="Visualisation">
+<!--		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
-				<Component name="Window" type="CvBasic:CvWindow" priority="1" bump="0">
-					<param name="count">2</param>
-					<param name="title">Left,Wide</param>
-				</Component>
 			</Executor>
-		</Subtask>	
+		</Subtask>	-->
 	
 	</Subtasks>
 	
@@ -127,6 +137,8 @@
 		<Source name="NextImageTrigger.out_trigger">
 			<sink>LeftRGBSequence.in_next_image_trigger</sink>
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
+			<sink>LeftRGBSequence.in_stream_trigger</sink>
+			<sink>WideRGBSequence.in_stream_trigger</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -134,18 +146,26 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="LeftCameraInfo.out_camera_info">
-			<sink>LeftSolvePNP.in_camerainfo</sink>
+			<sink>LeftSolvePNP.in_camera_info</sink>
+<!--			<sink>LeftUndistort.in_camera_info</sink>-->
 			<sink>LeftDraw.in_camera_matrix</sink>
 		</Source>
 
 		<Source name="LeftRGBSequence.out_img">
 			<sink>LeftColorConv.in_img</sink>
-			<sink>Window.in_img0</sink>		
+			<sink>Window.in_img0</sink>	
+<!--			<sink>LeftUndistort.in_img</sink>	-->
 		</Source>
+
+<!--		<Source name="LeftUndistort.out_img">
+			<sink>LeftColorConv.in_img</sink>
+			<sink>Window.in_img0</sink>	
+		</Source>-->
 
 		<Source name="LeftColorConv.out_img">
 			<sink>LeftChessboard.in_img</sink>
 		</Source>
+
 
 		<Source name="LeftChessboard.out_chessboard">
 			<sink>LeftSolvePNP.in_object3d</sink>	
@@ -166,18 +186,18 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="WideCameraInfo.out_camera_info">
-			<sink>WideSolvePNP.in_camerainfo</sink>
+			<sink>WideSolvePNP.in_camera_info</sink>
+<!--			<sink>WideUndistort.in_camera_info</sink>-->
 			<sink>WideDraw.in_camera_matrix</sink>
 		</Source>
 
 		<Source name="WideRGBSequence.out_img">
-<!--			<sink>WideRotateImage.in_img</sink> -->
 			<sink>WideColorConv.in_img</sink>
 			<sink>Window.in_img1</sink>		
+<!--			<sink>WideUndistort.in_img</sink>-->
 		</Source>
 
-
-<!--		<Source name="WideRotateImage.out_img">
+<!--		<Source name="WideUndistort.out_img">
 			<sink>WideColorConv.in_img</sink>
 			<sink>Window.in_img1</sink>		
 		</Source>-->
