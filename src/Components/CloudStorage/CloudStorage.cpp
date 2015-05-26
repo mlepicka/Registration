@@ -291,7 +291,7 @@ void  CloudStorage::publish_merged_clouds(){
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
 			// Transform it.
-			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
+			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
 			// Add to merged cloud.
 			*merged_cloud_xyzrgb += *trans_tmp;
 		}
@@ -320,7 +320,7 @@ void  CloudStorage::return_previous_cloud(){
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
 			// Transform it.
-			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
+			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
 			// Add to merged cloud.
 			*merged_previous += *trans_tmp;
 		}
@@ -334,7 +334,7 @@ void  CloudStorage::return_previous_cloud(){
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
 		// Transform it.
-		pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i].getElements());
+		pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
 
 		// Return previous cloud.
 		out_previous_cloud_xyzrgb.write(trans_tmp);

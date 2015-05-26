@@ -142,7 +142,7 @@ void  PairwiseRegistration::pairwise_registration_xyz(){
 
 	// Return identity matrix as transformation XYZ.
 	Types::HomogMatrix result;
-	result.setElements( Eigen::Matrix4f::Identity () );
+	result.setIdentity();
 	out_transformation_xyz.write(result);
 }
 
@@ -169,7 +169,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	if (previous_cloud_xyzrgb->empty () || !prop_ICP) {
 		// Return identity matrix.
 		CLOG(LINFO) << "ICP refinement not used";
-		result.setElements( Eigen::Matrix4f::Identity () );
+		result.setIdentity();
 	} else {
 		// Perform pairwise registration.
 		if (prop_ICP_colour && prop_ICP_normals) {
@@ -226,11 +226,12 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
+			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			result.setElements(icp_trans.inverse());
+			result.matrix() = icp_trans.matrix().inverse();
+
 			out_transformation_xyzrgb.write(result);
 
 		} else if (prop_ICP_normals) {
@@ -283,7 +284,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 
 /*
 				    // Run the same optimization in a loop and visualize the results
-				    Eigen::Matrix4f Ti = Eigen::Matrix4f::Identity (), prev, targetToSource;
+				    Types::HomogMatrix Ti = Types::HomogMatrix::Identity (), prev, targetToSource;
 				    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr reg_result (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
 				    reg_result = previous_cloud_xyzrgbnormals;
 
@@ -309,20 +310,22 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 				      prev = icp.getLastIncrementalTransformation ();
 				      reg_result= Final;
 				    }
-					Eigen::Matrix4f icp_trans = Ti;*/
+					Types::HomogMatrix icp_trans = Ti;*/
 
 			// Align clouds.
 			icp.align(*aligned_cloud_xyzrgbnormal);
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
+			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			result.setElements(icp_trans.inverse());
+			result.matrix()  = icp_trans.matrix().inverse();
+
 			out_transformation_xyzrgb.write(result);
+
 		} else if (prop_ICP_colour) {
 			CLOG(LINFO) << "Using ICP with colour for pairwise registration";
 			// Use ICP with colour to get "better" transformation.
@@ -351,11 +354,11 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
+			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			result.setElements(icp_trans.inverse());
+			result.matrix() = icp_trans.matrix().inverse();
 			out_transformation_xyzrgb.write(result);
 
 		} else {
@@ -382,11 +385,11 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
 			// Get the transformation from target to source.
-			Eigen::Matrix4f icp_trans = icp.getFinalTransformation();
+			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
 			// Set resulting transformation.
-			result.setElements(icp_trans.inverse());
+			result.matrix() = icp_trans.matrix().inverse();
 
 		}//: else ICP
 	}//: else - !previous_cloud_xyzrgb->empty ()
