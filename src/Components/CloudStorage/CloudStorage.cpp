@@ -217,7 +217,7 @@ void CloudStorage::add_cloud_to_storage(){
 			clouds_xyzrgb.push_back(cloud_xyzrgb);
 		}//: if
 
-	CLOG(LNOTICE) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
+	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
 	} catch (...) {
 		CLOG(LERROR) << "Cannot add clouds to storage - cloud transformation is required";
 	}//: catch
@@ -235,7 +235,7 @@ void  CloudStorage::remove_last_cloud_to_storage(){
 		clouds_xyz.pop_back();
 	if(!clouds_xyzrgb.empty())
 		clouds_xyzrgb.pop_back();
-	CLOG(LNOTICE) << "REM: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
+	CLOG(LINFO) << "REM: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
 }
 
 
@@ -290,10 +290,12 @@ void  CloudStorage::publish_merged_clouds(){
 			// Get cloud.
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
+			Types::HomogMatrix tmp_hm = transformations[i];
 			// Transform it.
-			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
+			pcl::transformPointCloud(*tmp, *trans_tmp, tmp_hm);
 			// Add to merged cloud.
 			*merged_cloud_xyzrgb += *trans_tmp;
+			CLOG(LDEBUG) << "cloud "<< i << " size="<<clouds_xyzrgb[i]->size() << " hm:\n" << tmp_hm;
 		}
 		// Return merged cloud.
 		CLOG(LINFO) << "merged_cloud_xyzrgb->size(): "<< merged_cloud_xyzrgb->size();
@@ -306,16 +308,23 @@ void  CloudStorage::return_previous_cloud(){
 	CLOG(LTRACE) << "CloudStorage::return_previous_cloud";
 	return_previous_cloud_flag = false;
 
+	CLOG(LDEBUG) << "transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
+
 	if (transformations.size() != clouds_xyzrgb.size()) {
 		CLOG(LINFO) << "Sizes of transformation and clouds_xyzrgb vectors differ!";
 		return;
-	}
+	}//: if
+
+	if (transformations.size() == 0) {
+		CLOG(LINFO) << "There are no clouds to return!";
+		return;
+	}//: if
 
 	if (prop_return_previous_merged_cloud) {
 		// Return merged cloud.
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_previous (new pcl::PointCloud<pcl::PointXYZRGB>);
 		// Merge all clouds EXCEPT the last (i.e. pairwise registered) one!
-		for (int i = 0 ; i < transformations.size()-1; i++) {
+		for (int i = 0 ; i <= transformations.size()-1; i++) {
 			// Get cloud.
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);

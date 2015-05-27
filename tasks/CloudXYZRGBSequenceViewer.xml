@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Dawid Kaczmarek</name>
+			<link></link>
+		</Author>
+	
+		<Description>
+			<brief>Displays point cloud generated from stereo</brief>
+			<full>Displays point clouds generated from a sequence of stereo-images (LR). Enables writing of point cloud to PCD files.</full>
+		</Description>
+	</Reference>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Processing" period="1">
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+				</Component>
+
+				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_models/full_icp/</param>
+					<param name="sequence.pattern">2015-05-27T21:36:33.134320_cukier_xyzrgb.pcd</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.auto_next_cloud">0</param>						
+					<param name="mode.auto_publish_cloud">0</param>						
+				</Component>
+
+			</Executor>
+		</Subtask>	
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Visualization and saving
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Subtask name="Display">
+			<Executor name="DisplayExec" period="0.5">
+
+				<Component name="Viewer" type="PCL:CloudViewer" priority="101" bump="0">
+					<param name="title">Model point cloud</param>
+                                        <param name="coordinate_system">0</param>
+				</Component>
+
+			</Executor>
+		</Subtask>	
+	</Subtasks>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- pipes connecting datastreams -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+
+	<DataStreams>
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+		<Source name="NextImageTrigger.out_trigger">
+			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink>
+			<sink>SequenceCloudXYZRGB.in_publish_cloud_trigger</sink>
+		</Source>
+
+		<Source name="SequenceCloudXYZRGB.out_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb</sink>
+		</Source>
+
+
+	</DataStreams>
+</Task>
+
