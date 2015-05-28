@@ -43,6 +43,7 @@ void CloudStorage::prepareInterface() {
 	// Register input data streams.
 //	registerStream("in_cloud_xyz", &in_cloud_xyz);
 	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
+	registerStream("in_cloud_xyzsift", &in_cloud_xyzsift);
 	registerStream("in_transformation", &in_transformation);
 	registerStream("in_add_cloud_trigger", &in_add_cloud_trigger);
 	registerStream("in_return_previous_cloud_trigger", &in_return_previous_cloud_trigger);
@@ -50,6 +51,7 @@ void CloudStorage::prepareInterface() {
 	// Register output data streams.
 //	registerStream("out_cloud_xyz", &out_cloud_xyz);
 	registerStream("out_cloud_xyzrgb", &out_cloud_xyzrgb);
+	registerStream("out_cloud_xyzsift", &out_cloud_xyzsift);
 	registerStream("out_previous_cloud_xyzrgb", &out_previous_cloud_xyzrgb);
 
 	// Register button-triggered handlers.
@@ -99,36 +101,36 @@ bool CloudStorage::onStart() {
 
 
 void CloudStorage::onAddCloudButtonPressed(){
-	CLOG(LTRACE) << "CloudStorage::onAddCloudButtonPressed";
+	CLOG(LTRACE) << "onAddCloudButtonPressed";
 	add_cloud_flag = true;
 }
 
 void CloudStorage::onAddCloudTriggered(){
-	CLOG(LDEBUG) << "CloudStorage::onAddCloudTriggered";
+	CLOG(LDEBUG) << "onAddCloudTriggered";
 	in_add_cloud_trigger.read();
 	add_cloud_flag = true;
 }
 
 
 void CloudStorage::onRemoveLastCloudButtonPressed(){
-	CLOG(LTRACE) << "CloudStorage::onRemoveLastCloudButtonPressed";
+	CLOG(LTRACE) << "onRemoveLastCloudButtonPressed";
 	remove_last_cloud_flag = true;
 }
 
 
 void CloudStorage::onClearStorageButtonPressed(){
-	CLOG(LTRACE) << "CloudStorage::onClearStorageButtonPressed";
+	CLOG(LTRACE) << "onClearStorageButtonPressed";
 	clear_storage_flag = true;
 }
 
 
 void CloudStorage::onReturnPreviousButtonPressed(){
-	CLOG(LDEBUG) << "CloudStorage::onReturnPreviousButtonPressed";
+	CLOG(LDEBUG) << "onReturnPreviousButtonPressed";
 	return_previous_cloud_flag = true;
 }
 
 void CloudStorage::onReturnPreviousCloudTriggered(){
-	CLOG(LDEBUG) << "CloudStorage::onReturnPreviousCloudTriggered";
+	CLOG(LDEBUG) << "onReturnPreviousCloudTriggered";
 	in_return_previous_cloud_trigger.read();
 	return_previous_cloud_flag = true;
 }
@@ -136,12 +138,12 @@ void CloudStorage::onReturnPreviousCloudTriggered(){
 
 
 void CloudStorage::update_storage(){
-	CLOG(LTRACE) << "CloudStorage::update_storage";
+	CLOG(LTRACE) << "update_storage";
 
 	// Overwrite last cloud.
 	if (prop_overwrite_last_cloud) {
 		// Check if something can be added - if so, remove last cloud.
-		if(!in_transformation.empty() && (!in_cloud_xyz.empty() || !in_cloud_xyzrgb.empty())){
+		if(!in_transformation.empty() && (!in_cloud_xyz.empty() || !in_cloud_xyzrgb.empty() || !in_cloud_xyzsift.empty())){
 			remove_last_cloud_flag = true;
 			add_cloud_flag = true;
 		}//: if
@@ -170,6 +172,8 @@ void CloudStorage::update_storage(){
 				clouds_xyz.erase(clouds_xyz.begin());
 			if(!clouds_xyzrgb.empty())
 				clouds_xyzrgb.erase(clouds_xyzrgb.begin());
+			if(!clouds_xyzsift.empty())
+				clouds_xyzsift.erase(clouds_xyzsift.begin());
 		}//: if
 	}//: if
 
@@ -183,16 +187,17 @@ void CloudStorage::update_storage(){
 
 
 void CloudStorage::add_cloud_to_storage(){ 
-	CLOG(LTRACE) << "CloudStorage::add_cloud_to_storage";
+	CLOG(LTRACE) << "add_cloud_to_storage";
 
 	// Local variables.
 	Types::HomogMatrix hm;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb;
+	pcl::PointCloud<PointXYZSIFT>::Ptr cloud_xyzsift;
 
 	try{ 
 		// Check homogenous matrix and add to storage only if any of the clouds is present!
-		if(in_transformation.empty() || (in_cloud_xyz.empty() && in_cloud_xyzrgb.empty())){
+		if(in_transformation.empty() || (in_cloud_xyz.empty() && in_cloud_xyzrgb.empty() && in_cloud_xyzsift.empty())){
 			throw exception();
 		}
 
@@ -217,7 +222,14 @@ void CloudStorage::add_cloud_to_storage(){
 			clouds_xyzrgb.push_back(cloud_xyzrgb);
 		}//: if
 
-	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
+		// Try to add XYZSIFT.
+		if(!in_cloud_xyzsift.empty()){
+			CLOG(LINFO) << "Adding XYZSIFT cloud to storage";
+			cloud_xyzsift = in_cloud_xyzsift.read();
+			clouds_xyzsift.push_back(cloud_xyzsift);
+		}//: if
+
+	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
 	} catch (...) {
 		CLOG(LERROR) << "Cannot add clouds to storage - cloud transformation is required";
 	}//: catch
@@ -225,7 +237,7 @@ void CloudStorage::add_cloud_to_storage(){
 
 
 void  CloudStorage::remove_last_cloud_to_storage(){
-	CLOG(LTRACE) << "CloudStorage::remove_last_cloud_to_storage";
+	CLOG(LTRACE) << "remove_last_cloud_to_storage";
 	// Reset flag.
 	remove_last_cloud_flag = false;
 
@@ -235,12 +247,14 @@ void  CloudStorage::remove_last_cloud_to_storage(){
 		clouds_xyz.pop_back();
 	if(!clouds_xyzrgb.empty())
 		clouds_xyzrgb.pop_back();
-	CLOG(LINFO) << "REM: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
+	if(!clouds_xyzsift.empty())
+		clouds_xyzsift.pop_back();
+	CLOG(LINFO) << "REM: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
 }
 
 
 void CloudStorage::clear_storage(){ 
-	CLOG(LTRACE) << "CloudStorage::clear_storage";
+	CLOG(LTRACE) << "clear_storage";
 	transformations.clear();
 	clouds_xyz.clear();
 	clouds_xyzrgb.clear();
@@ -250,12 +264,13 @@ void CloudStorage::clear_storage(){
 
 
 void  CloudStorage::publish_merged_clouds(){
-	CLOG(LTRACE) << "CloudStorage::publish_merged_clouds";
+	CLOG(LTRACE) << "publish_merged_clouds";
 
 	// Local variables.
 	Types::HomogMatrix hm;
 	pcl::PointCloud<pcl::PointXYZ>::Ptr merged_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_cloud_xyzrgb (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::PointCloud<PointXYZSIFT>::Ptr merged_cloud_xyzsift (new pcl::PointCloud<PointXYZSIFT>);
 
 	// Check size of vector of transformations.
 /*	if (transformations.size() < 1) {
@@ -302,10 +317,31 @@ void  CloudStorage::publish_merged_clouds(){
 		out_cloud_xyzrgb.write(merged_cloud_xyzrgb);
 	}//: else
 
+	// Merge XYZSIFT cloud - but earlier check size of vector of transformations.
+	if (transformations.size() != clouds_xyzsift.size()) {
+		CLOG(LINFO) << "Sizes of transformation and clouds_xyzsift vectors differ!";
+	} else {
+		for (int i = 0 ; i < transformations.size(); i++) {
+			// Get cloud.
+			pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp (new pcl::PointCloud<PointXYZSIFT>);
+			pcl::PointCloud<PointXYZSIFT>::Ptr tmp = (clouds_xyzsift[i]);
+			Types::HomogMatrix tmp_hm = transformations[i];
+			// Transform it.
+			pcl::transformPointCloud(*tmp, *trans_tmp, tmp_hm);
+			// Add to merged cloud.
+			*merged_cloud_xyzsift += *trans_tmp;
+			CLOG(LDEBUG) << "cloud "<< i << " size="<<clouds_xyzsift[i]->size() << " hm:\n" << tmp_hm;
+		}
+		// Return merged cloud.
+		CLOG(LINFO) << "merged_cloud_xyzsift->size(): "<< merged_cloud_xyzsift->size();
+		out_cloud_xyzsift.write(merged_cloud_xyzsift);
+	}//: else
+
+
 }
 
 void  CloudStorage::return_previous_cloud(){
-	CLOG(LTRACE) << "CloudStorage::return_previous_cloud";
+	CLOG(LTRACE) << "return_previous_cloud";
 	return_previous_cloud_flag = false;
 
 	CLOG(LDEBUG) << "transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();

@@ -14,6 +14,7 @@
 #include "EventHandler2.hpp"
 
 #include "Types/HomogMatrix.hpp"
+#include "Types/PointXYZSIFT.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -68,13 +69,16 @@ protected:
 	 */
 	bool onStop();
 
-	/// Input data stream containing XYZ cloud.
+	/// Input stream containing XYZ cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZ>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyz;
 
-	/// Input data stream containing XYZRGB cloud.
+	/// Input stream containing XYZRGB cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest > in_cloud_xyzrgb;
 
-	/// Initial transformation between clouds.
+	/// Input stream containing XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest > in_cloud_xyzsift;
+
+	/// Input stream containing transformation between clouds.
 	Base::DataStreamIn<Types::HomogMatrix, Base::DataStreamBuffer::Newest> in_transformation;
 
 	/// Trigger - used for adding cloud to storage.
@@ -83,19 +87,16 @@ protected:
 	/// Trigger - used for returning previous cloud.
 	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_return_previous_cloud_trigger;
 
-	/// Resulting transformation between XYZ clouds.
-//	Base::DataStreamOut <Types::HomogMatrix> out_xyz_transformation;
-
-	/// Resulting transformation between XYZRGB clouds.
-//	Base::DataStreamOut <Types::HomogMatrix> out_xyzrgb_transformation;
-
-	// Merged XYZ cloud.
+	// Output stream containing merged XYZ cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZ>::Ptr> out_cloud_xyz;
 
-	// Merged XYZRGB cloud.
+	// Output stream containing merged XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_cloud_xyzrgb;
 
-	// Previous  XYZRGB cloud.
+	// Output stream containing merged XYZSIFT cloud.
+	Base::DataStreamOut<pcl::PointCloud<PointXYZSIFT>::Ptr> out_cloud_xyzsift;
+
+	// Output stream: previous  XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_previous_cloud_xyzrgb;
 
 
@@ -114,14 +115,14 @@ protected:
 
 
 	/// Registration handler - activated when 
-	void pairwise_registration();
+/*	void pairwise_registration();
 
 	/// Aligns XYZ clouds.
 	void registration_xyz(Types::HomogMatrix hm_);
 
 	/// Aligns XYZRGB clouds.
 	void registration_xyzrgb(Types::HomogMatrix hm_);
-
+*/
 
 
 	/// Event handler function - adds point cloud to the storage.
@@ -185,6 +186,9 @@ private:
 
 	// Vector containing XYZ clouds.
 	std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> clouds_xyz;
+
+	// Vector containing XYZSIFT clouds.
+	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr> clouds_xyzsift;
 
 	/// Flag indicating whether the one of the previous cloud (one or merged) should be returned as previous (i.e. to which the registration will be made in the next step).
 	bool return_previous_cloud_flag;
