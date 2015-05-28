@@ -8,8 +8,8 @@
 		</Author>
 	
 		<Description>
-			<brief>Displays point cloud generated from stereo</brief>
-			<full>Displays point clouds generated from a sequence of stereo-images (LR). Enables writing of point cloud to PCD files.</full>
+			<brief>Displays XYZRGB point clouds readed from sequence one by one.</brief>
+			<full>Displays point clouds generated from a sequence of PCD files.</full>
 		</Description>
 	</Reference>
 
@@ -25,17 +25,17 @@
 <!--                                     Sources
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="4">
+					<param name="auto_trigger">1</param>						
 				</Component>
 
-				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_models/full_icp/</param>
-					<param name="sequence.pattern">2015-05-27T21:36:33.134320_cukier_xyzrgb.pcd</param>
-					<param name="mode.loop">1</param>
+				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="4">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_models/full_icp_c/</param>
+					<param name="sequence.pattern">.*.pcd</param>
+					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
-					<param name="mode.auto_publish_cloud">0</param>						
+					<param name="mode.auto_publish_cloud">1</param>						
 				</Component>
-
 			</Executor>
 		</Subtask>	
 
@@ -68,7 +68,11 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 		<Source name="NextImageTrigger.out_trigger">
 			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink>
-			<sink>SequenceCloudXYZRGB.in_publish_cloud_trigger</sink>
+<!--			<sink>SequenceCloudXYZRGB.in_publish_cloud_trigger</sink><!---->
+		</Source>
+
+		<Source name="SequenceCloudXYZRGB.out_end_of_sequence_trigger">
+			<sink>NextImageTrigger.in_stop_auto_trigger</sink>
 		</Source>
 
 		<Source name="SequenceCloudXYZRGB.out_cloud_xyzrgb">

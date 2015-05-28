@@ -32,20 +32,16 @@
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
 					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
-<!--					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>-->
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
-<!--                                        <param name="mode.auto_streaming">0</param>-->
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
 					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>
-<!--					<param name="sequence.directory">/home/tkornuta/discode_ecovi/DCL/Registration/data/testowe/ahmad/</param>-->
 					<param name="sequence.pattern">.*_depth.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
-<!--                                        <param name="mode.auto_streaming">0</param>-->
 				</Component>
 
 				<Component name="CameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="4">
@@ -94,6 +90,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="20" bump="-2">
+					<param name="inverse">1</param>
 				</Component>
 
 				<Component name="BoardExtractor" type="ModelViewAcquisition:CubicMaskExtractor" priority="21" bump="0">
@@ -110,9 +107,6 @@
 
 				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="23" bump="0">
 				</Component>
-
-<!--				<Component name="MLSSmoothing" type="PCL:MLSSmoothing" priority="24" bump="0">
-				</Component>-->
 
 				<Component name="StatisticalOutlierRemoval" type="PCL:StatisticalOutlierRemoval" priority="24" bump="0">
 					<param name="MeanK">100</param>
@@ -148,26 +142,22 @@
 <!--                              Visualization
 <!--------------------------------------------------------------------------------------------------------------------->
 
-<!--				<Component name="Draw" type="CvBasic:DrawCoordinateSystem" priority="100">
-				</Component>-->
+				<Component name="Draw" type="CvBasic:DrawCoordinateSystem" priority="100">
+				</Component><!---->
 
 
-<!--				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
-					<param name="count">1</param>
-					<param name="title">Board Pose</param>
-				</Component>-->
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">2</param>
+					<param name="title">Board Pose, Depth</param>
+				</Component><!---->
 
-
-<!--				<Component name="Viewer" type="PCL:CloudViewer" priority="102" bump="0">
-					<param name="title">Point cloud readed from RGB-D file</param>
-				</Component>-->
 
 			</Executor>
 		</Subtask>
 		
 		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
-				<Component name="Viewer" type="PCL:CloudViewer" priority="1" bump="0">
+				<Component name="Viewer" type="PCL:CloudViewer" priority="102" bump="0">
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">0</param>
 				</Component>
@@ -190,38 +180,34 @@
 		<Source name="Trigger.out_trigger">
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>DepthSequence.in_next_image_trigger</sink>
-<!--			<sink>RGBSequence.in_stream_trigger</sink>
-			<sink>DepthSequence.in_stream_trigger</sink>-->
-<!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>-->
+<!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 		</Source>
 
 		<Source name="DepthSequence.out_img">
  			<sink>D2XYZConverter.in_depth</sink>
-<!--			<sink>RGBXYZM2PCConverter.in_depth</sink>	-->
 		</Source>	
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
 			<sink>DetectCircles.in_img</sink>
 			<sink>DetectCirclesInv.in_img</sink>
-<!--			<sink>Window.in_img0</sink> DRAW-->	
+			<sink>Window.in_img0</sink> <!--DRAW-->	
 		</Source>		
 		<Source name="CameraInfo.out_camera_info">
 			<sink>D2XYZConverter.in_camera_info</sink>
-<!--			<sink>RGBXYZM2PCConverter.in_camera_info</sink>	NIEPOTRZEBNE! -->
 			<sink>SolvePNP.in_camera_info</sink>
 			<sink>SolvePNPinv.in_camera_info</sink>
-<!--			<sink>Draw.in_camera_matrix</sink> DRAW-->
+			<sink>Draw.in_camera_matrix</sink> <!--DRAW-->
 		</Source>
 
 		<Source name="D2XYZConverter.out_img">
 		  	<sink>DepthTransform.in_image_xyz</sink>
-<!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>-->
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!--DRAW-->
  		</Source>
 
 		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
-<!--			<sink>Window.in_img1</sink> DRAW-->
+			<sink>Window.in_img1</sink><!--DRAW-->
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -229,30 +215,28 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="DetectCircles.out_pattern">
-<!--			<sink>Window.in_draw0</sink> DRAW-->
+			<sink>Window.in_draw0</sink> <!--DRAW-->
 			<sink>SolvePNP.in_object3d</sink>		
 		</Source>
 		<Source name="DetectCirclesInv.out_pattern">
-<!--			<sink>Window.in_draw0</sink>  DRAW-->
+			<sink>Window.in_draw0</sink> <!--DRAW-->
 			<sink>SolvePNPinv.in_object3d</sink>	
 		</Source>
 
 		<Source name = "SolvePNPinv.out_homogMatrix">
 			<sink>SolveLocation.in_homogMatrix</sink>
-<!--			<sink>DepthTransform.in_homogMatrix</sink>-->
 		</Source>
 		<Source name= "SolvePNP.out_homogMatrix">
 			<sink>SolveLocation.in_homogMatrix</sink>
-<!--			<sink>DepthTransform.in_homogMatrix</sink>-->
 		</Source>
 		<Source name= "SolveLocation.out_homogMatrix">
-<!--			<sink>Draw.in_homogMatrix</sink> DRAW-->
+			<sink>Draw.in_homogMatrix</sink> <!--DRAW-->
 			<sink>DepthTransform.in_homogMatrix</sink>
 		</Source>
 
-<!--		<Source name="Draw.out_csystem">
+		<Source name="Draw.out_csystem">
 			<sink>Window.in_draw0</sink>		
-		</Source> DRAW-->
+		</Source> <!--DRAW-->
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Extraction of fragment of cloud constituting the object
@@ -274,14 +258,8 @@
 		</Source>
 
 		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
-<!--			<sink>MLSSmoothing.in_cloud_xyzrgb</sink>-->
-<!--			<sink>Viewer.in_cloud_xyzrgb</sink>-->
 			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
 		</Source>
-
-<!--		<Source name="MLSSmoothing.out_cloud_xyzrgb">
-			<sink>Viewer.in_cloud_xyzrgb</sink>		
-		</Source>-->
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Registration
@@ -294,7 +272,6 @@
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
 			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
-<!--			<sink>Viewer.in_cloud_xyzrgb</sink>-->
 		</Source>
 
 

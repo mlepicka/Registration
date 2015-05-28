@@ -8,8 +8,8 @@
 		</Author>
 		
 		<Description>
-			<brief>RGBXYZWideSequenceObjectFragmentCollector</brief>
-			<full>Loads colour and XYZ images, localizes reference frame of the board in third sequence (from wide camera), transforms coordinates into board reference frame, extracts masks and cuts points belonging to the area represented by the mask, collects the resulting point clouds and displays the merged point cloud.</full>
+			<brief>RGBXYZWideSequenceDepthTransformTest</brief>
+			<full>Loads colour and XYZ images, localizes reference frame of the board in third sequence (from wide camera) and transforms point clouds to board reference frame.</full>
 		</Description>
 	</Reference>
 	
@@ -31,23 +31,23 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_rgbxyz/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
-                                        <param name="mode.loop">0</param>
+                                        <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_rgbxyz/</param>
 					<param name="sequence.pattern">.*_xyz.yml</param>
-                                        <param name="mode.loop">0</param>
+                                        <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_wide/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_wide/</param>
 					<param name="sequence.pattern">Window2_.*\.png</param>
-                                        <param name="mode.loop">0</param>
+                                        <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
@@ -103,110 +103,47 @@
 				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
 				</Component>
 
+				<Component name="tmpWide2BoardeHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="22" bump="0">
+				</Component>
+
 				<Component name="Wide2BoardTransformation" type="CvStereo:DepthTransform" priority="23" bump="0">
                                         <param name="inverse">1</param>
 				</Component>
 
-<!--				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="25" bump="0">
+				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="30" bump="0">
 					<param name="fixed_range"> 1</param>
 					<param name="min_range"> -0.5</param>
 					<param name="max_range"> 1 </param>
-				</Component><!---->
-
-				<Component name="BoardExtractor" type="ModelViewAcquisition:CubicMaskExtractor" priority="30" bump="0">
-					<param name="BlueAxis(X).X_Max">0.09</param>
-					<param name="BlueAxis(X).X_Min">-0.09</param>
-					<param name="GreenAxis(Y).Y_Max">0.09</param>
-					<param name="GreenAxis(Y).Y_Min">-0.09</param>
-					<param name="RedAxis(Z).Z_Max">0.195</param>
-					<param name="RedAxis(Z).Z_Min">0.015</param>
 				</Component>
 
 <!--------------------------------------------------------------------------------------------------------------------->
-<!--                              Processing point clouds from NOW ON!
+<!--                              Visualization
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="31" bump="0">
+				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="90">
 				</Component>
 
-
-				<Component name="StatisticalOutlierRemoval" type="PCL:StatisticalOutlierRemoval" priority="32" bump="0">
-					<param name="MeanK">50</param>
-					<param name="StddevMulThresh">0.01</param>
+				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="91" bump="0">
 				</Component>
-
-<!--------------------------------------------------------------------------------------------------------------------->
-<!--                              Registration
-<!--------------------------------------------------------------------------------------------------------------------->
-
-				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="40" bump="0">
-				</Component>
-
-				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
-				</Component>
-
-				<Component name="VoxelGrid" type="PCL:VoxelGrid" priority="42" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-				<Component name="PreviousVoxelGrid" type="PCL:VoxelGrid" priority="43" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-
-				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="50" bump="1">
-					<param name="Mode.ICP">0</param>
-					<param name="ICP.UseColour">0</param>
-					<param name="ICP.UseNormals">1</param>
-					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
-					<param name="ICP.MaximumIterations">50</param>
-					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
-					<param name="ICP.TransformationEpsilon">1e-20</param>
-				</Component>
-
-				<Component name="CloudStorage" type="Registration:CloudStorage" priority="51" bump="0">
-					<param name="CloudsLimit">2</param>
-					<param name="ReturnPreviousMergedCloud">0</param>
-				</Component>
-
-
-<!--------------------------------------------------------------------------------------------------------------------->
-<!--                              Visualization and saving
-<!--------------------------------------------------------------------------------------------------------------------->
-
-				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_models/</param>
-					<param name="base_name">lipton</param>
-					<param name="binary">1</param>
-				</Component>
-
-				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="101">
-				</Component>
-
-<!--				<Component name="Window" type="CvBasic:CvWindow" priority="103" bump="0">
-					<param name="count">3</param>
-					<param name="title">RGB,XYZ,Wide</param>
-				</Component><!---->
 
 			</Executor>
 		</Subtask>
 		
 		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
-				<Component name="Viewer" type="PCL:CloudViewer" priority="104" bump="0">
+				<Component name="Viewer" type="PCL:CloudViewer" priority="100" bump="0">
 					<param name="title">Model point cloud</param>
-                                        <param name="coordinate_system">0</param>
+                                        <param name="coordinate_system">1</param>
+				</Component>
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,XYZ,Wide</param>
 				</Component>
 
 
 			</Executor>
-		</Subtask><!---->	
+		</Subtask>	
 
 	</Subtasks>
 
@@ -224,9 +161,6 @@
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>XYZSequence.in_next_image_trigger</sink>
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
-			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
-			<sink>CloudStorage.in_add_cloud_trigger</sink>
-			<sink>Writer.in_save_cloud_trigger</sink>
 		</Source>
 
 		<Source name="XYZSequence.out_img">
@@ -235,13 +169,13 @@
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
-<!--			<sink>Window.in_img0</sink><!---->
+			<sink>Window.in_img0</sink>
 		</Source>
 
 		<Source name="WideRGBSequence.out_img">
 			<sink>DetectCircles.in_img</sink>
 			<sink>DetectCirclesInv.in_img</sink>
-<!--			<sink>Window.in_img2</sink><!---->
+			<sink>Window.in_img2</sink>
 		</Source>
 
 		<Source name="WideCameraInfo.out_camera_info">
@@ -250,30 +184,16 @@
 			<sink>WideDraw.in_camera_matrix</sink>
 		</Source>
 
-
-		<Source name="XYZSequence.out_end_of_sequence_trigger">
-			<sink>Trigger.in_stop_auto_trigger</sink>
-		</Source>
-
-		<Source name="RGBSequence.out_end_of_sequence_trigger">
-			<sink>Trigger.in_stop_auto_trigger</sink>
-		</Source>
-
-		<Source name="WideRGBSequence.out_end_of_sequence_trigger">
-			<sink>Trigger.in_stop_auto_trigger</sink>
-		</Source>
-
-
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Board pose estimation
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="DetectCircles.out_pattern">
-<!--			<sink>Window.in_draw2</sink><!---->
+			<sink>Window.in_draw2</sink>
 			<sink>SolvePNP.in_object3d</sink>		
 		</Source>
 		<Source name="DetectCirclesInv.out_pattern">
-<!--			<sink>Window.in_draw2</sink><!---->
+			<sink>Window.in_draw2</sink>
 			<sink>SolvePNPinv.in_object3d</sink>	
 		</Source>
 
@@ -302,63 +222,20 @@
 		</Source>
 
 
+<!--		<Source name= "tmpWide2BoardeHMProvider.out_homogMatrix">
+			<sink>Wide2BoardTransformation.in_homogMatrix</sink>
+		</Source>-->
+
 		<Source name="Wide2BoardTransformation.out_image_xyz">
-<!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!---->
-			<sink>BoardExtractor.in_image_xyz</sink>
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
 		</Source>
 
 
-<!--		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
+		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
 			<sink>Window.in_img1</sink>
-		</Source><!---->
-
-		<Source name="BoardExtractor.out_mask">
-			<sink>RGBXYZM2PCConverter.in_mask</sink>
-		 </Source>
-
-		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
-			<sink>StatisticalOutlierRemoval.in_cloud_xyzrgb</sink>
 		</Source>
 
-		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
-			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
-		</Source>
-
-
-<!--------------------------------------------------------------------------------------------------------------------->
-<!--                              Registration
-<!--------------------------------------------------------------------------------------------------------------------->
-
-		<Source name= "InitialTransformation.out_homogMatrix">
-			<sink>CloudTransformer.in_hm</sink>
-		</Source>
-
-		<Source name= "CloudTransformer.out_cloud_xyzrgb">
-			<sink>VoxelGrid.in_cloud_xyzrgb</sink>
-			<sink>CloudStorage.in_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name= "VoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
-			<sink>CloudStorage.in_transformation</sink>
-		</Source>
-
-		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
-			<sink>PreviousVoxelGrid.in_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name= "PreviousVoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_previous_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name="CloudStorage.out_cloud_xyzrgb">
-			<sink>Viewer.in_cloud_xyzrgb</sink><!---->
-			<sink>Writer.in_cloud_xyzrgb</sink>
-		</Source>
 
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -366,9 +243,13 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 
-<!--		<Source name="WideDraw.out_csystem">
+		<Source name="WideDraw.out_csystem">
 			<sink>Window.in_draw2</sink>		
-		</Source><!---->
+		</Source>
+
+		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb</sink>
+		</Source>
 
 	</DataStreams>
 </Task>
