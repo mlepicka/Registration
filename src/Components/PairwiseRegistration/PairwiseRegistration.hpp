@@ -70,13 +70,13 @@ protected:
 
 
 	/// Input data stream containing XYZ cloud.
-	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZ>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyz;
+//	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZ>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyz;
 
-	/// Input data stream containing XYZRGB cloud.
-	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyzrgb;
+	/// Input data stream containing source (previous) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_src_cloud_xyzrgb;
 
-	/// Input data stream containing previous XYZRGB cloud.
-	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_previous_cloud_xyzrgb;
+	/// Input data stream containing target (next) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_trg_cloud_xyzrgb;
 
 	/// Resulting transformation between XYZ clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyz;
@@ -84,8 +84,8 @@ protected:
 	/// Resulting transformation between XYZRGB clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyzrgb;
 
-	/// Previous cloud, to which the component will try to align.
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr previous_cloud_xyzrgb;
+	/// Source (previous) cloud, to which the component will try to align.
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb;
 
 
 	/****************** ICP PROPERTIES ***********************/
@@ -113,12 +113,13 @@ protected:
 
 
 	/// Align XYZ clouds - handler.
-	void pairwise_registration_xyz();
+//	void pairwise_registration_xyz();
 
 	/// Aligns XYZRGB clouds - handler.
 	void pairwise_registration_xyzrgb();
 
-
+	// Performs ICP-based pairwise registration.
+	Types::HomogMatrix pairwise_icp_based_registration_xyzrgb(pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb_);
 };
 
 } //: namespace PairwiseRegistration

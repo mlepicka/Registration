@@ -42,14 +42,14 @@ CorrespondenceEstimation::~CorrespondenceEstimation() {
 
 void CorrespondenceEstimation::prepareInterface() {
 	// Register data streams.
-	registerStream("in_cloud_source_xyzsift", &in_cloud_source_xyzsift);
-	registerStream("in_cloud_target_xyzsift", &in_cloud_target_xyzsift);
+	registerStream("in_src_cloud_xyzsift", &in_src_cloud_xyzsift);
+	registerStream("in_trg_cloud_xyzsift", &in_trg_cloud_xyzsift);
 	registerStream("out_correspondences", &out_correspondences);
 
 	// Register handlers.
 	registerHandler("estimateCorrespondences", boost::bind(&CorrespondenceEstimation::estimateCorrespondences, this));
-	addDependency("estimateCorrespondences", &in_cloud_source_xyzsift);
-	addDependency("estimateCorrespondences", &in_cloud_target_xyzsift);
+	addDependency("estimateCorrespondences", &in_src_cloud_xyzsift);
+	addDependency("estimateCorrespondences", &in_trg_cloud_xyzsift);
 
 }
 
@@ -78,8 +78,8 @@ bool CorrespondenceEstimation::onStart() {
 void CorrespondenceEstimation::estimateCorrespondences() {
 	CLOG(LTRACE) << "estimateCorrespondences()";
 
-	pcl::PointCloud<PointXYZSIFT>::Ptr cloud_src = in_cloud_source_xyzsift.read();
-	pcl::PointCloud<PointXYZSIFT>::Ptr cloud_trg = in_cloud_target_xyzsift.read();
+	pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud = in_src_cloud_xyzsift.read();
+	pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud = in_trg_cloud_xyzsift.read();
 
 
 	// TODO if empty()
@@ -98,8 +98,8 @@ void CorrespondenceEstimation::estimateCorrespondences() {
 	correst.setPointRepresentation(point_representation);
 
 	// Set input clouds.
-	correst.setInputSource(cloud_src);
-	correst.setInputTarget(cloud_trg);
+	correst.setInputSource(src_cloud);
+	correst.setInputTarget(trg_cloud);
 
 	// Find correspondences.
 	correst.determineReciprocalCorrespondences(*correspondences);
@@ -114,8 +114,8 @@ void CorrespondenceEstimation::estimateCorrespondences() {
 			pcl::CorrespondencesPtr inliers(new pcl::Correspondences()) ;
 
 			pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZSIFT> crsac ;
-			crsac.setInputSource(cloud_src);
-			crsac.setInputTarget(cloud_trg);
+			crsac.setInputSource(src_cloud);
+			crsac.setInputTarget(trg_cloud);
 			crsac.setInlierThreshold(prop_RanSAC_inliers_threshold);
 			crsac.setMaximumIterations(prop_RanSAC_max_iterations);
 			crsac.setInputCorrespondences(correspondences);
@@ -137,8 +137,8 @@ void CorrespondenceEstimation::estimateCorrespondences() {
 			pcl::CorrespondencesPtr inliers(new pcl::Correspondences()) ;
 
 			pcl::registration:: CorrespondenceRejectorDistance cr ;
-			cr.setInputSource<PointXYZSIFT>(cloud_src);
-			cr.setInputTarget<PointXYZSIFT>(cloud_trg);
+			cr.setInputSource<PointXYZSIFT>(src_cloud);
+			cr.setInputTarget<PointXYZSIFT>(trg_cloud);
 			cr.setMaximumDistance(prop_max_distance);
 			cr.setInputCorrespondences(correspondences);
 

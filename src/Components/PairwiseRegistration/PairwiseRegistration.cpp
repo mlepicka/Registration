@@ -101,23 +101,23 @@ PairwiseRegistration::~PairwiseRegistration() {
 
 void PairwiseRegistration::prepareInterface() {
 	// Register data streams.
-//	registerStream("in_cloud_xyz", &in_cloud_xyz); : TODO
-	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
-	registerStream("in_previous_cloud_xyzrgb", &in_previous_cloud_xyzrgb);
+//	registerStream("in_trg_cloud_xyz", &in_trg_cloud_xyz); : TODO
+	registerStream("in_trg_cloud_xyzrgb", &in_trg_cloud_xyzrgb);
+	registerStream("in_src_cloud_xyzrgb", &in_src_cloud_xyzrgb);
 	registerStream("out_transformation_xyz", &out_transformation_xyz);
 	registerStream("out_transformation_xyzrgb", &out_transformation_xyzrgb);
 
 	// Register handlers
-	registerHandler("pairwise_registration_xyz", boost::bind(&PairwiseRegistration::pairwise_registration_xyz, this));
-	addDependency("pairwise_registration_xyz", &in_cloud_xyz);
+//	registerHandler("pairwise_registration_xyz", boost::bind(&PairwiseRegistration::pairwise_registration_xyz, this));
+//	addDependency("pairwise_registration_xyz", &in_trg_cloud_xyz);
 
 	registerHandler("pairwise_registration_xyzrgb", boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb, this));
-	addDependency("pairwise_registration_xyzrgb", &in_cloud_xyzrgb);
+	addDependency("pairwise_registration_xyzrgb", &in_trg_cloud_xyzrgb);
 }
 
 bool PairwiseRegistration::onInit() {
 	// Init prev cloud.
-	previous_cloud_xyzrgb = pcl::PointCloud<pcl::PointXYZRGB>::Ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
+	src_cloud_xyzrgb = pcl::PointCloud<pcl::PointXYZRGB>::Ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	return true;
 }
@@ -134,265 +134,272 @@ bool PairwiseRegistration::onStart() {
 	return true;
 }
 
-void  PairwiseRegistration::pairwise_registration_xyz(){
-	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyz";
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud = in_cloud_xyz.read();
+/*void  PairwiseRegistration::pairwise_registration_xyz(){
+	CLOG(LTRACE) << "pariwise_registration_xyz";
+	pcl::PointCloud<pcl::PointXYZ>::Ptr trg_cloud = in_trg_cloud_xyz.read();
 
-	CLOG(LERROR) << "PairwiseRegistration::registration_xyz NOT IMPLEMENTED!";
+	CLOG(LERROR) << "registration_xyz NOT IMPLEMENTED!";
 
 	// Return identity matrix as transformation XYZ.
 	Types::HomogMatrix result;
 	result.setIdentity();
 	out_transformation_xyz.write(result);
+}*/
+
+Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb_){
+	CLOG(LTRACE) << "pairwise_icp_based_registration_xyzrgb";
+	// Temporary variable storing the resulting transformation.
+	Types::HomogMatrix result;
+
+	// Perform pairwise registration.
+	if (prop_ICP_colour && prop_ICP_normals) {
+		CLOG(LINFO) << "Using ICP with colour and normals for pairwise registration";
+
+		// Compute surface normals.
+		pcl::PointCloud<pcl::Normal>::Ptr tmp_trg_cloud_normal (new pcl::PointCloud<pcl::Normal>);
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr src_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr trg_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+		pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
+		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+		norm_est.setSearchMethod (tree);
+		norm_est.setKSearch (30);
+		//norm_est.setRadiusSearch(radius_search); // 0.05
+
+		// Compute normals for previous cloud.
+		norm_est.setInputCloud (src_cloud_xyzrgb_);
+		norm_est.compute (*tmp_trg_cloud_normal);
+		// Concatenate clouds containing XYZRGB points and normals.
+		pcl::concatenateFields(*src_cloud_xyzrgb_, *tmp_trg_cloud_normal, *src_cloud_xyzrgbnormal);
+
+		// Compute normals for transformed cloud.
+		norm_est.setInputCloud (trg_cloud_xyzrgb_);
+		norm_est.compute (*tmp_trg_cloud_normal);
+		// Concatenate clouds containing XYZRGB points and normals.
+		pcl::concatenateFields(*trg_cloud_xyzrgb_, *tmp_trg_cloud_normal, *trg_cloud_xyzrgbnormal);
+
+		// Use ICP with normals AND colour to get "better" transformation.
+//		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
+		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
+
+		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations (prop_ICP_MaximumIterations);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+
+		// Set correspondence two-step correspondence estimation using colour.
+		pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
+		icp.setCorrespondenceEstimation(ceptr);
+
+		icp.setInputSource (src_cloud_xyzrgbnormal);
+		icp.setInputTarget (trg_cloud_xyzrgbnormal);
+
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_trg_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+
+		// Align clouds.
+		icp.align(*aligned_trg_cloud_xyzrgbnormal);
+		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
+
+		// Get the transformation from target to source.
+		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
+		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
+
+		// Set resulting transformation.
+		result.matrix() = icp_trans.matrix().inverse();
+
+	} else if (prop_ICP_normals) {
+		CLOG(LINFO) << "Using ICP with normals for pairwise registration";
+
+
+		// Compute surface normals.
+		pcl::PointCloud<pcl::Normal>::Ptr tmp_trg_cloud_normal (new pcl::PointCloud<pcl::Normal>);
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr src_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr trg_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
+
+		pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
+		pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
+		norm_est.setSearchMethod (tree);
+		norm_est.setKSearch (30);
+		//norm_est.setRadiusSearch(radius_search); // 0.05
+
+		// Compute normals for previous cloud.
+		norm_est.setInputCloud (src_cloud_xyzrgb_);
+		norm_est.compute (*tmp_trg_cloud_normal);
+		// Concatenate clouds containing XYZRGB points and normals.
+		pcl::concatenateFields(*src_cloud_xyzrgb_, *tmp_trg_cloud_normal, *src_cloud_xyzrgbnormal);
+
+		// Compute normals for transformed cloud.
+		norm_est.setInputCloud (trg_cloud_xyzrgb_);
+		norm_est.compute (*tmp_trg_cloud_normal);
+		// Concatenate clouds containing XYZRGB points and normals.
+		pcl::concatenateFields(*trg_cloud_xyzrgb_, *tmp_trg_cloud_normal, *trg_cloud_xyzrgbnormal);
+
+		// Use ICP with normals to get "better" transformation.
+//		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
+		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
+
+		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations (2);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+
+		// Set the point representation - x,y,z and curvature.
+		//icp.setPointRepresentation (boost::make_shared<const MyPointRepresentation> (point_representation));
+
+		icp.setInputSource (src_cloud_xyzrgbnormal);
+		icp.setInputTarget (trg_cloud_xyzrgbnormal);
+
+		pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_trg_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+
+	/*
+			    // Run the same optimization in a loop and visualize the results
+			    Types::HomogMatrix Ti = Types::HomogMatrix::Identity (), prev, targetToSource;
+			    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr reg_result (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
+			    reg_result = src_cloud_xyzrgbnormals;
+
+			    for (int i = 0; i < prop_ICP_MaximumIterations; ++i)
+			    {
+				CLOG(LINFO) << "ICP normals iteration:" << i;
+			      // Estimate
+				icp.setInputSource(reg_result);
+				icp.align (*aligned_trg_cloud_rgbxyzn);
+				if(icp.converged_==false)
+				{
+					CLOG(LERROR) << "Not enough correspondences found!";
+					return;
+				}
+			  		//accumulate transformation between each Iteration
+			      Ti = icp.getFinalTransformation () * Ti;
+
+			  		//if the difference between this transformation and the previous one
+			  		//is smaller than the threshold, refine the process by reducing
+			  		//the maximal correspondence distance
+			      if (fabs ((icp.getLastIncrementalTransformation () - prev).sum ()) < icp.getTransformationEpsilon ())
+				icp.setMaxCorrespondenceDistance (icp.getMaxCorrespondenceDistance () - 0.001);
+			      prev = icp.getLastIncrementalTransformation ();
+			      reg_result= Final;
+			    }
+				Types::HomogMatrix icp_trans = Ti;*/
+
+		// Align clouds.
+		icp.align(*aligned_trg_cloud_xyzrgbnormal);
+		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
+
+		// Get the transformation from target to source.
+		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
+
+		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
+
+		// Set resulting transformation.
+		result.matrix()  = icp_trans.matrix().inverse();
+
+	} else if (prop_ICP_colour) {
+		CLOG(LINFO) << "Using ICP with colour for pairwise registration";
+		// Use ICP with colour to get "better" transformation.
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+
+		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations (prop_ICP_MaximumIterations);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+
+		// Set correspondence two-step correspondence estimation using colour.
+		pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>);
+		icp.setCorrespondenceEstimation(ceptr);
+
+		// Add source and target clours.
+		icp.setInputSource(src_cloud_xyzrgb_);
+		icp.setInputTarget(trg_cloud_xyzrgb_);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_trg_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
+
+		// Align clouds.
+		icp.align(*aligned_trg_cloud_rgbxyz);
+		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
+
+		// Get the transformation from target to source.
+		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
+		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
+
+		// Set resulting transformation.
+		result.matrix() = icp_trans.matrix().inverse();
+
+	} else {
+		CLOG(LINFO) << "Using stantard ICP for pairwise registration";
+		// Use ICP to get "better" transformation.
+		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
+
+		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
+		// Set the maximum number of iterations (criterion 1)
+		icp.setMaximumIterations (prop_ICP_MaximumIterations);
+		// Set the transformation epsilon (criterion 2)
+		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
+		// Set the euclidean distance difference epsilon (criterion 3)
+		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+
+		// Add source and target clours.
+		icp.setInputSource(src_cloud_xyzrgb_);
+		icp.setInputTarget(trg_cloud_xyzrgb_);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_trg_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
+
+		// Align clouds.
+		icp.align(*aligned_trg_cloud_rgbxyz);
+		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
+
+		// Get the transformation from target to source.
+		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
+		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
+
+		// Set resulting transformation.
+		result.matrix() = icp_trans.matrix().inverse();
+
+	}//: else ICP
+
+	// Return transformation.
+	return result;
 }
 
+
 void  PairwiseRegistration::pairwise_registration_xyzrgb(){
-	CLOG(LTRACE) << "PairwiseRegistration::pariwise_registration_xyzrgb";
+	CLOG(LTRACE) << "pairwise_registration_xyzrgb";
 	// Temporary variable storing the resulting transformation.
 	Types::HomogMatrix result;
 	// Read current cloud from port.
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb = in_cloud_xyzrgb.read();
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb = in_trg_cloud_xyzrgb.read();
 
 	// Check whether previous cloud is received.
-	if (!in_previous_cloud_xyzrgb.empty()) {
-		CLOG(LINFO) << "Storing cloud as previous";
-		previous_cloud_xyzrgb = in_previous_cloud_xyzrgb.read();
-		// pcl::copyPointCloud<pcl::PointXYZRGB> (*cloud_xyzrgb, *previous_cloud_xyzrgb);
+	if (!in_src_cloud_xyzrgb.empty()) {
+		CLOG(LINFO) << "Storing source cloud";
+		src_cloud_xyzrgb = in_src_cloud_xyzrgb.read();
+		// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
 	}//: if
 
-	// TODO: DEBUG - remove.
-	CLOG(LERROR) << "Current cloud size:" << cloud_xyzrgb->size();
-	if (!previous_cloud_xyzrgb->empty ())
-			CLOG(LERROR) << "Previous cloud size:" << previous_cloud_xyzrgb->size();
+	// Debug.
+	CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzrgb->size();
+	if (!src_cloud_xyzrgb->empty ())
+			CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzrgb->size();
 
 	/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
-	if (previous_cloud_xyzrgb->empty () || !prop_ICP) {
+	if (src_cloud_xyzrgb->empty () || !prop_ICP) {
 		// Return identity matrix.
 		CLOG(LINFO) << "ICP refinement not used";
 		result.setIdentity();
 	} else {
-		// Perform pairwise registration.
-		if (prop_ICP_colour && prop_ICP_normals) {
-			CLOG(LINFO) << "Using ICP with colour and normals for pairwise registration";
-
-			// Compute surface normals.
-			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normal (new pcl::PointCloud<pcl::Normal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-
-			pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
-			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-			norm_est.setSearchMethod (tree);
-			norm_est.setKSearch (30);
-			//norm_est.setRadiusSearch(radius_search); // 0.05
-
-			// Compute normals for previous cloud.
-			norm_est.setInputCloud (previous_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normal);
-			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normal, *previous_cloud_xyzrgbnormal);
-
-			// Compute normals for transformed cloud.
-			norm_est.setInputCloud (cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normal);
-			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*cloud_xyzrgb, *tmp_cloud_normal, *cloud_xyzrgbnormal);
-
-
-			// Use ICP with normals AND colour to get "better" transformation.
-//			pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
-			pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
-
-			// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-			icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-			// Set the maximum number of iterations (criterion 1)
-			icp.setMaximumIterations (prop_ICP_MaximumIterations);
-			// Set the transformation epsilon (criterion 2)
-			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-			// Set the euclidean distance difference epsilon (criterion 3)
-			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
-
-			// Set correspondence two-step correspondence estimation using colour.
-			pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
-			icp.setCorrespondenceEstimation(ceptr);
-
-			icp.setInputSource (previous_cloud_xyzrgbnormal);
-			icp.setInputTarget (cloud_xyzrgbnormal);
-
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-		
-			// Align clouds.
-			icp.align(*aligned_cloud_xyzrgbnormal);
-			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
-
-			// Get the transformation from target to source.
-			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
-			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
-
-			// Set resulting transformation.
-			result.matrix() = icp_trans.matrix().inverse();
-
-			out_transformation_xyzrgb.write(result);
-
-		} else if (prop_ICP_normals) {
-			CLOG(LINFO) << "Using ICP with normals for pairwise registration";
-
-
-			// Compute surface normals.
-			pcl::PointCloud<pcl::Normal>::Ptr tmp_cloud_normal (new pcl::PointCloud<pcl::Normal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr previous_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-
-			pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
-			pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
-			norm_est.setSearchMethod (tree);
-			norm_est.setKSearch (30);
-			//norm_est.setRadiusSearch(radius_search); // 0.05
-
-			// Compute normals for previous cloud.
-			norm_est.setInputCloud (previous_cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normal);
-			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*previous_cloud_xyzrgb, *tmp_cloud_normal, *previous_cloud_xyzrgbnormal);
-
-			// Compute normals for transformed cloud.
-			norm_est.setInputCloud (cloud_xyzrgb);
-			norm_est.compute (*tmp_cloud_normal);
-			// Concatenate clouds containing XYZRGB points and normals.
-			pcl::concatenateFields(*cloud_xyzrgb, *tmp_cloud_normal, *cloud_xyzrgbnormal);
-
-			// Use ICP with normals to get "better" transformation.
-//			pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
-			pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
-
-			// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-			icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-			// Set the maximum number of iterations (criterion 1)
-			icp.setMaximumIterations (2);
-			// Set the transformation epsilon (criterion 2)
-			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-			// Set the euclidean distance difference epsilon (criterion 3)
-			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
-
-			// Set the point representation - x,y,z and curvature.
-			//icp.setPointRepresentation (boost::make_shared<const MyPointRepresentation> (point_representation));
-
-			icp.setInputSource (previous_cloud_xyzrgbnormal);
-			icp.setInputTarget (cloud_xyzrgbnormal);
-
-			pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr aligned_cloud_xyzrgbnormal (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-
-/*
-				    // Run the same optimization in a loop and visualize the results
-				    Types::HomogMatrix Ti = Types::HomogMatrix::Identity (), prev, targetToSource;
-				    pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr reg_result (new pcl::PointCloud<pcl::PointXYZRGBNormal>());
-				    reg_result = previous_cloud_xyzrgbnormals;
-
-				    for (int i = 0; i < prop_ICP_MaximumIterations; ++i)
-				    {
-					CLOG(LINFO) << "ICP normals iteration:" << i;
-				      // Estimate
-					icp.setInputSource(reg_result);
-					icp.align (*aligned_cloud_rgbxyzn);
-					if(icp.converged_==false)
-					{
-						CLOG(LERROR) << "Not enough correspondences found!";
-						return;
-					}
-				  		//accumulate transformation between each Iteration
-				      Ti = icp.getFinalTransformation () * Ti;
-
-				  		//if the difference between this transformation and the previous one
-				  		//is smaller than the threshold, refine the process by reducing
-				  		//the maximal correspondence distance
-				      if (fabs ((icp.getLastIncrementalTransformation () - prev).sum ()) < icp.getTransformationEpsilon ())
-					icp.setMaxCorrespondenceDistance (icp.getMaxCorrespondenceDistance () - 0.001);
-				      prev = icp.getLastIncrementalTransformation ();
-				      reg_result= Final;
-				    }
-					Types::HomogMatrix icp_trans = Ti;*/
-
-			// Align clouds.
-			icp.align(*aligned_cloud_xyzrgbnormal);
-			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
-
-			// Get the transformation from target to source.
-			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
-
-			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
-
-			// Set resulting transformation.
-			result.matrix()  = icp_trans.matrix().inverse();
-
-			out_transformation_xyzrgb.write(result);
-
-		} else if (prop_ICP_colour) {
-			CLOG(LINFO) << "Using ICP with colour for pairwise registration";
-			// Use ICP with colour to get "better" transformation.
-			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-
-			// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-			icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-			// Set the maximum number of iterations (criterion 1)
-			icp.setMaximumIterations (prop_ICP_MaximumIterations);
-			// Set the transformation epsilon (criterion 2)
-			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-			// Set the euclidean distance difference epsilon (criterion 3)
-			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
-
-			// Set correspondence two-step correspondence estimation using colour.
-			pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>);
-			icp.setCorrespondenceEstimation(ceptr);
-
-			// Add source and target clours.
-			icp.setInputSource(previous_cloud_xyzrgb);
-			icp.setInputTarget(cloud_xyzrgb);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
-		
-			// Align clouds.
-			icp.align(*aligned_cloud_rgbxyz);
-			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
-
-			// Get the transformation from target to source.
-			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
-			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
-
-			// Set resulting transformation.
-			result.matrix() = icp_trans.matrix().inverse();
-			out_transformation_xyzrgb.write(result);
-
-		} else {
-			CLOG(LINFO) << "Using stantard ICP for pairwise registration";
-			// Use ICP to get "better" transformation.
-			pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
-
-			// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-			icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-			// Set the maximum number of iterations (criterion 1)
-			icp.setMaximumIterations (prop_ICP_MaximumIterations);
-			// Set the transformation epsilon (criterion 2)
-			icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-			// Set the euclidean distance difference epsilon (criterion 3)
-			icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
-
-			// Add source and target clours.
-			icp.setInputSource(previous_cloud_xyzrgb);
-			icp.setInputTarget(cloud_xyzrgb);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr aligned_cloud_rgbxyz (new pcl::PointCloud<pcl::PointXYZRGB>());
-
-			// Align clouds.
-			icp.align(*aligned_cloud_rgbxyz);
-			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
-
-			// Get the transformation from target to source.
-			Types::HomogMatrix icp_trans = icp.getFinalTransformation();
-			CLOG(LINFO) << "icp_trans:\n" << icp_trans;
-
-			// Set resulting transformation.
-			result.matrix() = icp_trans.matrix().inverse();
-
-		}//: else ICP
-	}//: else - !previous_cloud_xyzrgb->empty ()
+		// Run ICP.
+		result = pairwise_icp_based_registration_xyzrgb(src_cloud_xyzrgb, trg_cloud_xyzrgb);
+	}//: else - !src_cloud_xyzrgb->empty ()
 
 	// Return the transformation.
 	out_transformation_xyzrgb.write(result);
@@ -406,8 +413,8 @@ http://www.pcl-users.org/Very-poor-registration-results-td3569265.html
 http://pointclouds.org/documentation/tutorials/template_alignment.php#template-alignment
 
   // Compute surface normals and curvature
-  PointCloudWithNormals::Ptr previous_cloud_xyznormals (new PointCloudWithNormals);
-  PointCloudWithNormals::Ptr transformed_cloud_xyznormals (new PointCloudWithNormals);
+  PointCloudWithNormals::Ptr src_cloud_xyznormals (new PointCloudWithNormals);
+  PointCloudWithNormals::Ptr transformed_trg_cloud_xyznormals (new PointCloudWithNormals);
 
   pcl::NormalEstimation<PointT, pcl::PointNormal> norm_est;
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
@@ -415,12 +422,12 @@ http://pointclouds.org/documentation/tutorials/template_alignment.php#template-a
   norm_est.setKSearch (30);
   
   norm_est.setInputCloud (src);
-  norm_est.compute (*previous_cloud_xyznormals);
-  pcl::copyPointCloud (*src, *previous_cloud_xyznormals);
+  norm_est.compute (*src_cloud_xyznormals);
+  pcl::copyPointCloud (*src, *src_cloud_xyznormals);
 
   norm_est.setInputCloud (tgt);
-  norm_est.compute (*transformed_cloud_xyznormals);
-  pcl::copyPointCloud (*tgt, *transformed_cloud_xyznormals);
+  norm_est.compute (*transformed_trg_cloud_xyznormals);
+  pcl::copyPointCloud (*tgt, *transformed_trg_cloud_xyznormals);
 
   //
   // Instantiate our custom point representation (defined above) ...

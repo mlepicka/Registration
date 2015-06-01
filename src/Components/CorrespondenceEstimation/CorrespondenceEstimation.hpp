@@ -71,10 +71,10 @@ protected:
 
 
 	/// Input data stream containing source XYZSIFT cloud.
-	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_cloud_source_xyzsift;
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_src_cloud_xyzsift;
 
 	/// Input data stream containing target XYZSIFT cloud.
-	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_cloud_target_xyzsift;
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_trg_cloud_xyzsift;
 	
 	/// Output data stream containing corespondences beetwen input clouds.
 	Base::DataStreamOut<pcl::CorrespondencesPtr> out_correspondences;

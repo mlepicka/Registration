@@ -270,7 +270,7 @@
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
 		</Source>
 
@@ -280,7 +280,7 @@
 		</Source>
 
 		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_previous_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">

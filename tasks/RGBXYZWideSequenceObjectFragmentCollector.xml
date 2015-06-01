@@ -145,21 +145,6 @@
 				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
 				</Component>
 
-				<Component name="VoxelGrid" type="PCL:VoxelGrid" priority="42" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-				<Component name="PreviousVoxelGrid" type="PCL:VoxelGrid" priority="43" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="50" bump="1">
 					<param name="Mode.ICP">0</param>
 					<param name="ICP.UseColour">0</param>
@@ -335,12 +320,8 @@
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
-			<sink>VoxelGrid.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name= "VoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
@@ -348,11 +329,7 @@
 		</Source>
 
 		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
-			<sink>PreviousVoxelGrid.in_cloud_xyzrgb</sink>
-		</Source>
-
-		<Source name= "PreviousVoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_previous_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">

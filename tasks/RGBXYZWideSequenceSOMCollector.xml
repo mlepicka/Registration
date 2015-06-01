@@ -158,21 +158,6 @@
 				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="81" bump="0">
 				</Component>
 
-				<Component name="VoxelGrid" type="PCL:VoxelGrid" priority="82" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-				<Component name="PreviousVoxelGrid" type="PCL:VoxelGrid" priority="83" bump="0">
-					<param name="LeafSize.x">0.00005</param>
-					<param name="LeafSize.y">0.00005</param>
-					<param name="LeafSize.z">0.00005</param>
-					<param name="pass_through">1</param>
-				</Component>
-
-
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="84" bump="1">
 					<param name="Mode.ICP">0</param>
 					<param name="ICP.UseColour">0</param>
@@ -184,7 +169,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="85" bump="0">
-					<param name="CloudsLimit">1</param>
+					<param name="CloudsLimit">0</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -239,7 +224,7 @@
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
 <!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>-->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
-			<sink>Writer.in_save_cloud_trigger</sink>
+<!--			<sink>Writer.in_save_cloud_trigger</sink>-->
 		</Source>
 
 		<Source name="XYZSequence.out_img">
@@ -368,7 +353,7 @@
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
-			<sink>VoxelGrid.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
 		</Source>
 
@@ -376,21 +361,14 @@
 			<sink>CloudStorage.in_cloud_xyzsift</sink>
 		</Source>
 
-		<Source name= "VoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_cloud_xyzrgb</sink>
-		</Source>
-
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
-			<sink>PreviousVoxelGrid.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
 
-		<Source name= "PreviousVoxelGrid.out_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_previous_cloud_xyzrgb</sink>
-		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>
