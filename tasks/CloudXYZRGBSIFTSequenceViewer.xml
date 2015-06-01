@@ -3,12 +3,12 @@
 	<!-- reference task information -->
 	<Reference>
 		<Author>
-			<name>Dawid Kaczmarek</name>
+			<name>Tomasz Kornuta</name>
 			<link></link>
 		</Author>
 	
 		<Description>
-			<brief>Displays XYZRGB point clouds readed from sequence one by one.</brief>
+			<brief>Displays XYZRGB and XYZSIFT point clouds readed from sequence one by one.</brief>
 			<full>Displays point clouds generated from a sequence of PCD files.</full>
 		</Description>
 	</Reference>
@@ -26,23 +26,28 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
-					<param name="auto_trigger">1</param>						
+					<param name="auto_trigger">0</param>						
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_models/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
 					<param name="mode.auto_publish_cloud">1</param>						
-				</Component>
-				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="4">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_models/</param>
+					<param name="cloud.xyzrgb">1</param>						
+
+				</Component><!---->
+
+				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
 					<param name="mode.auto_publish_cloud">1</param>						
+					<param name="cloud.xyzsift">1</param>						
 				</Component>
+
 			</Executor>
 		</Subtask>	
 
@@ -74,25 +79,25 @@
 <!--                                     Sources
 <!--------------------------------------------------------------------------------------------------------------------->
 		<Source name="NextImageTrigger.out_trigger">
-			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink>
+			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink><!---->
 			<sink>SequenceCloudXYZSIFT.in_next_cloud_trigger</sink>
 		</Source>
 
 		<Source name="SequenceCloudXYZRGB.out_end_of_sequence_trigger">
 			<sink>NextImageTrigger.in_stop_auto_trigger</sink>
-		</Source>
+		</Source><!---->
 
 		<Source name="SequenceCloudXYZSIFT.out_end_of_sequence_trigger">
 			<sink>NextImageTrigger.in_stop_auto_trigger</sink>
-		</Source>
+		</Source><!---->
 
 		<Source name="SequenceCloudXYZRGB.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>
-		</Source>
+		</Source><!---->
 
 		<Source name="SequenceCloudXYZSIFT.out_cloud_xyzsift">
 			<sink>Viewer.in_cloud_xyzsift</sink>
-		</Source>
+		</Source><!---->
 
 
 	</DataStreams>

@@ -176,7 +176,7 @@
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="84" bump="1">
 					<param name="Mode.ICP">0</param>
 					<param name="ICP.UseColour">0</param>
-					<param name="ICP.UseNormals">1</param>
+					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
 					<param name="ICP.MaximumIterations">50</param>
 					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
@@ -184,7 +184,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="85" bump="0">
-					<param name="CloudsLimit">2</param>
+					<param name="CloudsLimit">1</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -194,9 +194,9 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_models/</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views/</param>
 					<param name="base_name">lipton</param>
-					<param name="binary">1</param>
+					<param name="binary">0</param>
 				</Component>
 
 				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="101">
@@ -239,7 +239,7 @@
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
 <!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>-->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
-<!--			<sink>Writer.in_save_cloud_trigger</sink>-->
+			<sink>Writer.in_save_cloud_trigger</sink>
 		</Source>
 
 		<Source name="XYZSequence.out_img">
