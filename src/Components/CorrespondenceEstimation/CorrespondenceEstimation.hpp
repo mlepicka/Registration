@@ -83,6 +83,20 @@ protected:
 	/// Handler - estimates the correspondences.
 	void estimateCorrespondences();
 
+	/// Property - use correspondence rejection (RanSAC or simple euclidean distance metric). 
+	Base::Property<bool> prop_reject_correspondences;
+
+	/// Property - use RanSaC based correspondence rejection. 
+	Base::Property<bool> prop_use_RanSAC;
+
+	/// Property - the inliers threshold (set to 5cm, i.e. 0.05m).
+	Base::Property<float> prop_RanSAC_inliers_threshold;
+
+	/// Property - the maximum number of iterations (set to 1000). 
+	Base::Property<float> prop_RanSAC_max_iterations;
+
+	/// Property - the maximum euclidean distance.
+	Base::Property<float> prop_max_distance;
 
 };
 

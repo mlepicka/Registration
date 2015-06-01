@@ -85,6 +85,9 @@
 				<Component name="Viewer" type="SIFTObjectModel:CorrespondencesViewer" priority="101" bump="0">
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">0</param>
+                                        <param name="tx">0.1</param>
+                                        <param name="ty">0.1</param>
+                                        <param name="tz">0.1</param>
 				</Component>
 
 			</Executor>
