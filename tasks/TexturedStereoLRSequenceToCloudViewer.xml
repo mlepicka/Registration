@@ -26,6 +26,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+					<param name="auto_trigger">1</param>
 				</Component>
 
 				<Component name="CameraInfoLeft" type="CvCoreTypes:CameraInfoProvider" priority="2" bump="0">
@@ -38,27 +39,27 @@
 
 
 				<Component name="SequenceLeft" type="CvBasic:Sequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_original/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_original/</param>
 					<param name="sequence.pattern">Window1_.*\.png</param>
-					<param name="mode.loop">1</param>
+					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_image">0</param>						
 				</Component>
 				<Component name="SequenceRight" type="CvBasic:Sequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_original/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_original/</param>
 					<param name="sequence.pattern">Window0_.*\.png</param>
-					<param name="mode.loop">1</param>
+					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_image">0</param>					
 				</Component>
 
 
 				<Component name="TexturedSequenceLeft" type="CvBasic:Sequence" priority="13" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_textured/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_textured/</param>
 					<param name="sequence.pattern">Window1_.*\.png</param>
 					<param name="mode.loop">1</param>
 					<param name="mode.auto_next_image">0</param>						
 				</Component>
 				<Component name="TexturedSequenceRight" type="CvBasic:Sequence" priority="14" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_textured/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_textured/</param>
 					<param name="sequence.pattern">Window0_.*\.png</param>
 					<param name="mode.loop">1</param>
 					<param name="mode.auto_next_image">0</param>					
@@ -89,12 +90,11 @@
 				</Component>
 
 				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="21" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_rgbxyz</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_rgbxyz</param>
 					<param name="count">2</param>
 					<param name="digits">1</param>
 					<param name="base_name">rgb,xyz</param>
 					<param name="format">png,yml</param>
-					<param name="mode.auto_trigger">0</param>
 				</Component>
 
 				<Component name="DepthRainbow" type="CvStereo:DepthRainbow" priority="23" bump="0">
@@ -103,7 +103,7 @@
 			</Executor>
 		</Subtask>	
 
-		<Subtask name="Display">
+<!--		<Subtask name="Display">
 			<Executor name="DisplayExec" period="1">
 				<Component name="WindowCloud" type="PCL:CloudViewer" priority="100" bump="0">
 					<param name="window_name">RGBXYZ Cloud</param>
@@ -114,7 +114,7 @@
 				</Component>
 
 			</Executor>
-		</Subtask>	
+		</Subtask><!---->
 	</Subtasks>
 
 
@@ -146,6 +146,14 @@
 		</Source>
 
 
+		<Source name="SequenceLeft.out_end_of_sequence_trigger">
+			<sink>NextImageTrigger.in_stop_auto_trigger</sink>
+		</Source>
+
+<!--		<Source name="SequenceRight.out_end_of_sequence_trigger">
+			<sink>NextImageTrigger.in_stop_auto_trigger</sink>
+		</Source>-->
+
 
 		<Source name="SequenceLeft.out_img">
 			<sink>StereoEstimator.l_in_img</sink>
@@ -168,7 +176,7 @@
 		<Source name="StereoEstimator.out_rgb_stereo">
 			<sink>DepthConventer.in_rgb_stereo</sink>
 			<sink>ImageWriter.in_img0</sink>
-			<sink>Window.in_img0</sink>
+<!--			<sink>Window.in_img0</sink><!---->
 		</Source>
 
 		<Source name="TexturedStereoEstimator.out_depth_xyz">
@@ -179,11 +187,11 @@
 
 
 		<Source name="DepthRainbow.out_depth_rainbow">
-			<sink>Window.in_img1</sink>
+<!--			<sink>Window.in_img1</sink><!---->
 		</Source>
 
 		<Source name="DepthConventer.out_cloud_xyzrgb">
-			<sink>WindowCloud.in_cloud_xyzrgb</sink>
+<!--			<sink>WindowCloud.in_cloud_xyzrgb</sink><!---->
 		</Source>
 
 	</DataStreams>

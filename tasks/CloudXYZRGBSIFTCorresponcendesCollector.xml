@@ -26,11 +26,11 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="SequenceTrigger" type="CvBasic:Trigger" priority="1" bump="0">
-					<param name="auto_trigger">0</param>						
+					<param name="auto_trigger">1</param>						
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -39,7 +39,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
