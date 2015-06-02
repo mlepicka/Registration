@@ -3,4 +3,7 @@ ADD_COMPONENT(PairwiseRegistration)
 
 ADD_COMPONENT(CloudStorage)
 
+ADD_COMPONENT(CloudStorageLUM)
+
 ADD_COMPONENT(CorrespondenceEstimation)
+

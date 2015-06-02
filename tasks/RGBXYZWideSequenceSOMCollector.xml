@@ -169,7 +169,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="85" bump="0">
-					<param name="CloudsLimit">1</param>
+					<param name="CloudsLimit">0</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -195,7 +195,7 @@
 			</Executor>
 		</Subtask>
 		
-<!--		<Subtask name="Visualisation">
+		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
 				<Component name="Viewer" type="PCL:CloudViewer" priority="104" bump="0">
 					<param name="title">Model point cloud</param>
@@ -224,7 +224,7 @@
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
 			<sink>CloudStorage.in_return_previous_cloud_trigger</sink>
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
-			<sink>Writer.in_save_cloud_trigger</sink>
+<!--			<sink>Writer.in_save_cloud_trigger</sink>-->
 		</Source>
 
 		<Source name="XYZSequence.out_img">
@@ -371,12 +371,12 @@
 
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">
-<!--			<sink>Viewer.in_cloud_xyzrgb</sink><!---->
+			<sink>Viewer.in_cloud_xyzrgb</sink><!---->
 			<sink>Writer.in_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzsift">
-<!--			<sink>Viewer.in_cloud_xyzsift</sink><!---->
+			<sink>Viewer.in_cloud_xyzsift</sink><!---->
 			<sink>Writer.in_cloud_xyzsift</sink>
 		</Source>
 

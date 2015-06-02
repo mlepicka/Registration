@@ -30,7 +30,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_no_icp/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -39,7 +39,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_no_icp/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -52,7 +52,10 @@
 <!--                                     Registration
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="CloudStorage" type="Registration:CloudStorage" priority="20" bump="0">
+				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="19" bump="0">
+				</Component>
+
+				<Component name="CloudStorageLUM" type="Registration:CloudStorageLUM" priority="20" bump="0">
 					<param name="CloudsLimit">0</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
@@ -67,19 +70,23 @@
 <!--                              Visualization and saving
 <!--------------------------------------------------------------------------------------------------------------------->
 
-		<Subtask name="Display">
-			<Executor name="DisplayExec" period="0.5">
+		<Subtask name="Visualisation">
+			<Executor name="Exec2" period="0.2">
+<!--				<Component name="Viewer" type="PCL:CloudViewer" priority="104" bump="0">
+					<param name="title">Model point cloud</param>
+                                        <param name="coordinate_system">0</param>
+				</Component>-->
 
 				<Component name="Viewer" type="SIFTObjectModel:CorrespondencesViewer" priority="101" bump="0">
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">0</param>
-                                        <param name="tx">0</param>
+                                        <param name="tx">-0.05</param>
                                         <param name="ty">0</param>
-                                        <param name="tz">0.1</param>
+                                        <param name="tz">0.05</param>
 				</Component>
 
 			</Executor>
-		</Subtask>	
+		</Subtask><!---->	
 	</Subtasks>
 
 
@@ -91,11 +98,12 @@
 
 	<DataStreams>
 <!--------------------------------------------------------------------------------------------------------------------->
-<!--                                     "" sequence
+<!--                                     Sources
 <!--------------------------------------------------------------------------------------------------------------------->
 		<Source name="SequenceTrigger.out_trigger">
 			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink><!---->
 			<sink>SequenceCloudXYZSIFT.in_next_cloud_trigger</sink>
+			<sink>CloudStorageLUM.in_add_cloud_trigger</sink>
 		</Source>
 
 		<Source name="SequenceCloudXYZRGB.out_end_of_sequence_trigger">
@@ -107,19 +115,57 @@
 		</Source><!---->
 
 		<Source name="SequenceCloudXYZRGB.out_cloud_xyzrgb">
-			<sink>Viewer.in_cloud_xyzrgb1</sink>
+			<sink>CloudStorageLUM.in_cloud_xyzrgb</sink>
 		</Source><!---->
 
 		<Source name="SequenceCloudXYZSIFT.out_cloud_xyzsift">
-			<sink>Viewer.in_cloud_xyzsift1</sink>
-			<sink>CorrespondenceEstimation.in_src_cloud_xyzsift</sink><!---->
+			<sink>CloudStorageLUM.in_cloud_xyzsift</sink>
 		</Source><!---->
 
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Registration
+<!--------------------------------------------------------------------------------------------------------------------->
+		<Source name= "InitialTransformation.out_homogMatrix">
+			<sink>CloudStorageLUM.in_transformation</sink>
+		</Source>
 
+<!--		<Source name="CloudStorageLUM.out_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb</sink>
+		</Source>
 
+		<Source name="CloudStorageLUM.out_cloud_xyzsift">
+			<sink>Viewer.in_cloud_xyzsift</sink>
+		</Source><!---->
 
+		<Source name="CloudStorageLUM.out_lum_xyzsift">
+			<sink>CorrespondenceEstimation.in_lum_xyzsift</sink>
+		</Source><!---->
 
-		<Source name="CorrespondenceEstimation.out_correspondences">
+		<Source name="CorrespondenceEstimation.out_lum_xyzsift">
+			<sink>CloudStorageLUM.in_lum_xyzsift</sink>
+		</Source><!---->
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Correspondence viewer
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="CloudStorageLUM.out_src_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb1</sink>
+		</Source><!---->
+
+		<Source name="CloudStorageLUM.out_src_cloud_xyzsift">
+			<sink>Viewer.in_cloud_xyzsift1</sink>
+		</Source><!---->
+
+		<Source name="CloudStorageLUM.out_trg_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb2</sink>
+		</Source><!---->
+
+		<Source name="CloudStorageLUM.out_trg_cloud_xyzsift">
+			<sink>Viewer.in_cloud_xyzsift2</sink>
+		</Source><!---->
+
+		<Source name="CloudStorageLUM.out_src_trg_correspondences">
 			<sink>Viewer.in_correspondences</sink>
 		</Source> <!---->
 

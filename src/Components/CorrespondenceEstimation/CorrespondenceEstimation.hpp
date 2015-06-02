@@ -19,6 +19,9 @@
 #include <Types/PointXYZSIFT.hpp>
 #include <Types/SIFTFeatureRepresentation.hpp>
 
+// GraphSLAM structure.
+#include <pcl/registration/lum.h>
+
 namespace Processors {
 namespace CorrespondenceEstimation {
 
@@ -79,9 +82,21 @@ protected:
 	/// Output data stream containing corespondences beetwen input clouds.
 	Base::DataStreamOut<pcl::CorrespondencesPtr> out_correspondences;
 
+	/// Input data stream containing the SLAM graph in which correspondences will be found.
+	Base::DataStreamIn<pcl::registration::LUM<PointXYZSIFT>::Ptr> in_lum_xyzsift;
 
-	/// Handler - estimates the correspondences.
-	void estimateCorrespondences();
+	/// Output data stream containing the SLAM graph with estimated correspondences.
+	Base::DataStreamOut<pcl::registration::LUM<PointXYZSIFT>::Ptr> out_lum_xyzsift;
+
+
+	/// Handler - estimates the correspondences for pair of input clouds.
+	void estimateCorrespondencesForPairOfClouds();
+
+	/// Handler - estimates the correspondences for whole LUM graph.
+	void estimateCorrespondencesForLUMGraph();
+
+	/// Estimates the correspondences between source and targed point clouds.
+	pcl::CorrespondencesPtr estimateCorrespondences(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_);
 
 	/// Property - use correspondence rejection (RanSAC or simple euclidean distance metric). 
 	Base::Property<bool> prop_reject_correspondences;
@@ -97,6 +112,9 @@ protected:
 
 	/// Property - the maximum euclidean distance.
 	Base::Property<float> prop_max_distance;
+
+	/// Property - return empty list of correspondences.
+        Base::Property<bool> pass_through;
 
 };
 
