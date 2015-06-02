@@ -201,12 +201,17 @@ protected:
 	void onUpdateTransfromationsBasingOnLumGraphSlam();
 
 
-	/// Event handler function - sets publishSrcTrgCorrs_falg to true. 
+	/// Event handler function - sets publishSrcTrgCorrs_flag to true. 
 	void onPublishSrcTrgCorrespondencesButtonPressed();
 
 	/// Publishes source and target clouds along with correspondences.
 	void publishSrcTrgCorrespondences();
 
+	/// Event handler function - sets executeLUM_flag to true. 
+	void onExecuteLUMButtonPressed();
+
+	/// Runs LUM Graph SLAM optimization.
+	void executeLUM();
 
 private:
 	/// Flag indicating whether the cloud should be added to storage.
@@ -242,6 +247,9 @@ private:
 
 	/// Flag indicating that pairs of source and target clouds along with correspondences should be published.
 	bool publishSrcTrgCorrs_flag;
+
+	/// Flag indicating that LUM optimization should be executed.
+	bool executeLUM_flag;
 
 };
 

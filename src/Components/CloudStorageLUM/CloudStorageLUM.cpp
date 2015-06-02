@@ -86,14 +86,16 @@ void CloudStorageLUM::prepareInterface() {
 	registerHandler("onReturnPreviousCloudTriggered", boost::bind(&CloudStorageLUM::onReturnPreviousCloudTriggered, this));
 	addDependency("onReturnPreviousCloudTriggered", &in_publish_previous_cloud_trigger);
 
-	registerHandler("LUM Graph SLAM publish", boost::bind(&CloudStorageLUM::onPublishLUMGraphSLAMButtonPressed, this));
+	registerHandler("LUM publish graph", boost::bind(&CloudStorageLUM::onPublishLUMGraphSLAMButtonPressed, this));
 
-	registerHandler("LUM Graph SLAM generate", boost::bind(&CloudStorageLUM::onGenerateLUMGraphSLAMButtonPressed, this));
+	registerHandler("LUM generate graph", boost::bind(&CloudStorageLUM::onGenerateLUMGraphSLAMButtonPressed, this));
 
 	registerHandler("onUpdateTransfromationsBasingOnLumGraphSlam", boost::bind(&CloudStorageLUM::onUpdateTransfromationsBasingOnLumGraphSlam, this));
 	addDependency("onUpdateTransfromationsBasingOnLumGraphSlam", &in_lum_xyzsift);
 
 	registerHandler("Publish src-trg correspondences", boost::bind(&CloudStorageLUM::onPublishSrcTrgCorrespondencesButtonPressed, this));
+
+	registerHandler("LUM execute optimization", boost::bind(&CloudStorageLUM::onExecuteLUMButtonPressed, this));
 
 	// Register "main" storage management method.
 	registerHandler("update_storage", boost::bind(&CloudStorageLUM::update_storage, this));
@@ -110,6 +112,7 @@ bool CloudStorageLUM::onInit() {
 	publishLumGraphSlam_flag = false;
 	generateLumGraphSlam_flag = false;
 	publishSrcTrgCorrs_flag = false;
+	executeLUM_flag = false;
 
 	if (prop_store_first_cloud)
 		add_cloud_flag = true;
@@ -210,13 +213,6 @@ void CloudStorageLUM::update_storage(){
 		}//: if
 	}//: if
 
-	// Publish cloud merged from currently possesed ones.
-	publish_merged_clouds();
-
-	// Return previous (single or merged) cloud.
-	if (publishPreviousCloud_flag)
-		publishPreviousCloud();
-
 	// Generate LUM graph SLAM.
 	if(generateLumGraphSlam_flag)
 		generateLumGraphSlam();
@@ -228,6 +224,18 @@ void CloudStorageLUM::update_storage(){
 	// Publish source and target clouds along with correspondences.
 	if(publishSrcTrgCorrs_flag)
 		publishSrcTrgCorrespondences();
+
+	// Run LUM!
+	if (executeLUM_flag)
+		executeLUM();
+
+	// Publish cloud merged from currently possesed ones.
+	publish_merged_clouds();
+
+	// Return previous (single or merged) cloud.
+	if (publishPreviousCloud_flag)
+		publishPreviousCloud();
+
 }
 
 
@@ -267,7 +275,8 @@ void CloudStorageLUM::add_cloud_to_storage(){
 			clouds_xyzsift.push_back(cloud_xyzsift);
 		}//: if
 
-	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() <<  " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
+		CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() <<  " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
+		CLOG(LNOTICE) << "Cloud added to storage - size: "<< transformations.size();
 	} catch (...) {
 		CLOG(LERROR) << "Cannot add clouds to storage - cloud transformation is required";
 	}//: catch
@@ -286,6 +295,7 @@ void  CloudStorageLUM::remove_last_cloud_to_storage(){
 	if(!clouds_xyzsift.empty())
 		clouds_xyzsift.pop_back();
 	CLOG(LINFO) << "REM: transformations.size(): "<< transformations.size() <<  " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
+	CLOG(LNOTICE) << "Previous cloud removed from storage - size: "<< transformations.size();
 }
 
 
@@ -297,6 +307,7 @@ void CloudStorageLUM::clear_storage(){
 	clouds_xyzsift.clear();
 	// Reset flag.
 	clear_storage_flag = false;
+	CLOG(LNOTICE) << "Storage cleared";
 }
 
 
@@ -399,13 +410,13 @@ void CloudStorageLUM::publishPreviousCloud(){
 
 
 void CloudStorageLUM::onPublishLUMGraphSLAMButtonPressed(){
-	CLOG(LERROR) << "onPublishLUMGraphSLAMButtonPressed()";
+	CLOG(LTRACE) << "onPublishLUMGraphSLAMButtonPressed()";
 	publishLumGraphSlam_flag = true;
 }
 
 
 void CloudStorageLUM::publishLumGraphSlam() {
-	CLOG(LERROR) << "publishLumGraphSlam()";
+	CLOG(LTRACE) << "publishLumGraphSlam()";
 	publishLumGraphSlam_flag = false;
 	out_lum_xyzsift.write(lum_xyzsift);
 }
@@ -413,12 +424,12 @@ void CloudStorageLUM::publishLumGraphSlam() {
 
 
 void CloudStorageLUM::onGenerateLUMGraphSLAMButtonPressed(){
-	CLOG(LERROR) << "onGenerateLUMGraphSLAMButtonPressed()";
+	CLOG(LTRACE) << "onGenerateLUMGraphSLAMButtonPressed()";
 	generateLumGraphSlam_flag = true;
 }
 
 void CloudStorageLUM::generateLumGraphSlam() {
-	CLOG(LERROR) << "generateLumGraphSlam()";
+	CLOG(LTRACE) << "generateLumGraphSlam()";
 	generateLumGraphSlam_flag = false;
 
 	// Generate LUM structure - from scract, thus create new object.
@@ -441,7 +452,7 @@ void CloudStorageLUM::generateLumGraphSlam() {
 		lum_xyzsift->addPointCloud(clouds_xyzsift[i], v6f);
 	}//: for
 
-	CLOG(LINFO) << "Generated grapth with vertices: "<<lum_xyzsift->getNumVertices();
+	CLOG(LNOTICE) << "Generated graph with vertices: "<<lum_xyzsift->getNumVertices();
 }
 
 
@@ -449,23 +460,18 @@ void CloudStorageLUM::onUpdateTransfromationsBasingOnLumGraphSlam() {
 	CLOG(LTRACE) << "onUpdateTransfromationsBasingOnLumGraphSlam()";
 	// Read lum.
 	lum_xyzsift = in_lum_xyzsift.read();
-	// Update transformations.
-	for (int i = 1 ; i < transformations.size(); i++) {
-		CLOG(LDEBUG) << "Updating transformation on the basis of retrieved lum, i="<<i;
-		Eigen::Affine3f aff3f = lum_xyzsift->getTransformation(i);
-		transformations[i] = aff3f;
-	}//: for
+	CLOG(LNOTICE) << "LUM Graph SLAM object updated";
 }
 
 
 void CloudStorageLUM::onPublishSrcTrgCorrespondencesButtonPressed() {
-	CLOG(LERROR) << "onPublishSrcTrgCorrespondencesButtonPressed()";
+	CLOG(LTRACE) << "onPublishSrcTrgCorrespondencesButtonPressed()";
 	publishSrcTrgCorrs_flag = true;
 }
 
 
 void CloudStorageLUM::publishSrcTrgCorrespondences() {
-	CLOG(LERROR) << "Number of vertices in graph = "<< lum_xyzsift->getNumVertices() << " prop_src_cloud_index = "<< prop_src_cloud_index << " prop_trg_cloud_index = " << prop_trg_cloud_index;
+	CLOG(LTRACE) << "Number of vertices in graph = "<< lum_xyzsift->getNumVertices() << " prop_src_cloud_index = "<< prop_src_cloud_index << " prop_trg_cloud_index = " << prop_trg_cloud_index;
 	publishSrcTrgCorrs_flag = false;
 	// Check if there are any vertices added.
 	if (lum_xyzsift->getNumVertices() == 0) {
@@ -493,10 +499,39 @@ void CloudStorageLUM::publishSrcTrgCorrespondences() {
 	//lum_xyzsift->getPointCloud(prop_trg_cloud_index)
 
 	out_src_trg_correspondences.write(lum_xyzsift->getCorrespondences(prop_src_cloud_index, prop_trg_cloud_index));
+
+	CLOG(LNOTICE) << "Published source ("<< clouds_xyzrgb[prop_src_cloud_index]->size() <<";"<< clouds_xyzsift[prop_src_cloud_index]->size() <<") and target ("<<
+		clouds_xyzrgb[prop_trg_cloud_index]->size() <<";"<<clouds_xyzsift[prop_trg_cloud_index]->size() <<") clouds along with correspondences ("<< 
+		lum_xyzsift->getCorrespondences(prop_src_cloud_index, prop_trg_cloud_index)->size() <<") ";
 }
 
+void CloudStorageLUM::onExecuteLUMButtonPressed() {
+	CLOG(LTRACE) << "onExecuteLUMButtonPressed()";
+	executeLUM_flag = true;
+}
 
+void CloudStorageLUM::executeLUM() {
+	CLOG(LTRACE) << "executeLUM()";
+	executeLUM_flag = false;
 
+	// Set lum properties.
+	//lum_xyzsift->setMaxIterations(maxIterations);
+	
+	// Execute LUM.
+	CLOG(LNOTICE) << "Executing LUM Graph SLAM - please wait...";
+	lum_xyzsift->compute();
+
+	// Update transformations.
+	for (int i = 1 ; i < transformations.size(); i++) {
+		// CLOG(LDEBUG) << "Updating transformation on the basis of retrieved lum, i="<<i;
+		Eigen::Affine3f aff3f = lum_xyzsift->getTransformation(i);
+		CLOG(LDEBUG) << "transformations["<<i<<"] before=\n"<<transformations[i];
+		transformations[i] = aff3f;
+		CLOG(LDEBUG) << "transformations["<<i<<"] after=\n"<<transformations[i];
+	}//: for
+	CLOG(LNOTICE) << "Stored dataset refined with LUM Graph SLAM!";
+
+}
 
 } //: namespace CloudStorageLUM
 } //: namespace Processors
