@@ -490,12 +490,29 @@ void CloudStorageLUM::publishSrcTrgCorrespondences() {
 		return;
 	}//: if
 
+	/// Source clouds.
+	// Transform XYZRGB source cloud.
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_src_xyzrgb (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::transformPointCloud(*clouds_xyzrgb[prop_src_cloud_index], *trans_src_xyzrgb, transformations[prop_src_cloud_index]);
+	out_src_cloud_xyzrgb.write(trans_src_xyzrgb);
 
-	out_src_cloud_xyzrgb.write(clouds_xyzrgb[prop_src_cloud_index]);
-	out_src_cloud_xyzsift.write(clouds_xyzsift[prop_src_cloud_index]);
 
-	out_trg_cloud_xyzrgb.write(clouds_xyzrgb[prop_trg_cloud_index]);
-	out_trg_cloud_xyzsift.write(clouds_xyzsift[prop_trg_cloud_index]);
+	// Transform XYZRGB source cloud.
+	pcl::PointCloud<PointXYZSIFT>::Ptr trans_src_xyzsift (new pcl::PointCloud<PointXYZSIFT>);
+	pcl::transformPointCloud(*clouds_xyzsift[prop_src_cloud_index], *trans_src_xyzsift, transformations[prop_src_cloud_index]);
+	out_src_cloud_xyzsift.write(trans_src_xyzsift);
+
+
+	// Transform XYZRGB target cloud.
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_trg_xyzrgb (new pcl::PointCloud<pcl::PointXYZRGB>);
+	pcl::transformPointCloud(*clouds_xyzrgb[prop_trg_cloud_index], *trans_trg_xyzrgb, transformations[prop_trg_cloud_index]);
+	out_trg_cloud_xyzrgb.write(trans_trg_xyzrgb);
+
+	// Transform XYZRGB target cloud.
+	pcl::PointCloud<PointXYZSIFT>::Ptr trans_trg_xyzsift (new pcl::PointCloud<PointXYZSIFT>);
+	pcl::transformPointCloud(*clouds_xyzsift[prop_trg_cloud_index], *trans_trg_xyzsift, transformations[prop_trg_cloud_index]);
+	out_trg_cloud_xyzsift.write(trans_trg_xyzsift);
+
 	//lum_xyzsift->getPointCloud(prop_trg_cloud_index)
 
 	out_src_trg_correspondences.write(lum_xyzsift->getCorrespondences(prop_src_cloud_index, prop_trg_cloud_index));

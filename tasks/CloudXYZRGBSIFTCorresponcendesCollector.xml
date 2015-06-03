@@ -26,11 +26,12 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="SequenceTrigger" type="CvBasic:Trigger" priority="1" bump="0">
-					<param name="auto_trigger">1</param>						
+					<param name="auto_trigger">0</param>						
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_views_icp_c/</param>
+<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_views_icp_c/</param>-->
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -39,7 +40,8 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_views_icp_c/</param>
+<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_2_views_icp_c/</param>-->
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -49,37 +51,83 @@
 
 
 <!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Cloud processing
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="PassThrough1" type="PCL:PassThrough" priority="20" bump="0">
+					<param name="pass_through">0</param>
+                                        <param name="x.min">-1</param>
+                                        <param name="x.max">1</param>
+                                        <param name="y.min">-1</param>
+                                        <param name="y.max">1</param>
+                                        <param name="z.min">0.03</param>
+                                        <param name="z.max">0.09</param>
+				</Component>
+
+				<Component name="PassThrough2" type="PCL:PassThrough" priority="21" bump="0">
+					<param name="pass_through">1</param>
+				</Component>
+
+				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="22" bump="0">
+					<param name="offset.x">-0.005</param>
+					<param name="offset.y">-0.004</param>
+					<param name="offset.z">0.109</param>
+					<param name="offset.roll">3.17</param>
+					<param name="offset.pitch">0</param>
+					<param name="offset.yaw">3.15</param>
+				</Component>
+
+				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="23" bump="0">
+					<param name="pass_through">1</param>
+				</Component>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Registration
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="19" bump="0">
+
+				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="30" bump="0">
+					<param name="Mode.ICP">0</param>
+					<param name="ICP.UseColour">1</param>
+					<param name="ICP.UseNormals">0</param>
+					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
+					<param name="ICP.MaximumIterations">50</param>
+					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
+					<param name="ICP.TransformationEpsilon">1e-20</param>
 				</Component>
 
-				<Component name="CloudStorageLUM" type="Registration:CloudStorageLUM" priority="20" bump="0">
+				<Component name="CloudStorageLUM" type="Registration:CloudStorageLUM" priority="31" bump="0">
 					<param name="CloudsLimit">0</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
-                		<Component name="CorrespondenceEstimation" type="Registration:CorrespondenceEstimation" priority="21" bump="0">
+                		<Component name="CorrespondenceEstimation" type="Registration:CorrespondenceEstimation" priority="32" bump="0">
 					<param name="rejection.use">1</param>						
 					<param name="rejection.max_distance">0.02</param>						
 				</Component>
-
-			</Executor>
-		</Subtask>	
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Visualization and saving
 <!--------------------------------------------------------------------------------------------------------------------->
 
+				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/</param>
+					<param name="base_name">lipton_2_icp_c</param>
+					<param name="binary">1</param>
+				</Component>
+
+			</Executor>
+		</Subtask>	
+
 		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
-				<Component name="Viewer" type="PCL:CloudViewer" priority="104" bump="0">
+				<Component name="Viewer" type="PCL:CloudViewer" priority="101" bump="0">
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">0</param>
-				</Component>-->
+				</Component>
 
-				<Component name="CorrsViewer" type="SIFTObjectModel:CorrespondencesViewer" priority="101" bump="0">
+				<Component name="CorrsViewer" type="SIFTObjectModel:CorrespondencesViewer" priority="102" bump="0">
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">0</param>
                                         <param name="tx">-0.05</param>
@@ -105,7 +153,7 @@
 		<Source name="SequenceTrigger.out_trigger">
 			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink><!---->
 			<sink>SequenceCloudXYZSIFT.in_next_cloud_trigger</sink>
-			<sink>CloudStorageLUM.in_add_cloud_trigger</sink>
+			<sink>CloudStorageLUM.in_add_cloud_trigger</sink><!---->
 		</Source>
 
 		<Source name="SequenceCloudXYZRGB.out_end_of_sequence_trigger">
@@ -117,26 +165,76 @@
 		</Source><!---->
 
 		<Source name="SequenceCloudXYZRGB.out_cloud_xyzrgb">
-			<sink>CloudStorageLUM.in_cloud_xyzrgb</sink>
+			<sink>PassThrough1.in_cloud_xyzrgb</sink>
 		</Source><!---->
 
 		<Source name="SequenceCloudXYZSIFT.out_cloud_xyzsift">
-			<sink>CloudStorageLUM.in_cloud_xyzsift</sink>
+			<sink>PassThrough1.in_cloud_xyzsift</sink>
 		</Source><!---->
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Cloud processing
+<!--------------------------------------------------------------------------------------------------------------------->
+
+
+		<Source name= "PassThrough1.out_cloud_xyzrgb">
+			<sink>PassThrough2.in_cloud_xyzrgb</sink>
+		</Source>
+
+
+		<Source name= "PassThrough1.out_cloud_xyzsift">
+			<sink>PassThrough2.in_cloud_xyzsift</sink>
+		</Source>
+
+
+		<Source name= "PassThrough2.out_cloud_xyzrgb">
+			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
+		</Source>
+
+
+		<Source name= "PassThrough2.out_cloud_xyzsift">
+			<sink>CloudTransformer.in_cloud_xyzsift</sink>
+		</Source>
+
+
+		<Source name= "InitialTransformation.out_homogMatrix">
+			<sink>CloudTransformer.in_hm</sink>
+		</Source>
+
+		<Source name= "CloudTransformer.out_cloud_xyzrgb">
+			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb</sink>
+			<sink>CloudStorageLUM.in_cloud_xyzrgb</sink>
+		</Source>
+
+
+		<Source name= "CloudTransformer.out_cloud_xyzsift">
+			<sink>CloudStorageLUM.in_cloud_xyzsift</sink>
+		</Source>
+
+
+
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Registration
 <!--------------------------------------------------------------------------------------------------------------------->
-		<Source name= "InitialTransformation.out_homogMatrix">
+
+		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorageLUM.in_transformation</sink>
 		</Source>
 
+		<Source name="CloudStorageLUM.out_previous_cloud_xyzrgb">
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
+		</Source>
+
+
 		<Source name="CloudStorageLUM.out_cloud_xyzrgb">
-			<sink>Viewer.in_cloud_xyzrgb</sink>
+			<sink>Viewer.in_cloud_xyzrgb</sink><!---->
+			<sink>Writer.in_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorageLUM.out_cloud_xyzsift">
-			<sink>Viewer.in_cloud_xyzsift</sink>
+			<sink>Viewer.in_cloud_xyzsift</sink><!---->
+			<sink>Writer.in_cloud_xyzsift</sink>
 		</Source><!---->
 
 		<Source name="CloudStorageLUM.out_lum_xyzsift">
@@ -170,7 +268,6 @@
 		<Source name="CloudStorageLUM.out_src_trg_correspondences">
 			<sink>CorrsViewer.in_correspondences</sink>
 		</Source> <!---->
-
 
 	</DataStreams>
 </Task>

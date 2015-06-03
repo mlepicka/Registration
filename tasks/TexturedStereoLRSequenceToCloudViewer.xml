@@ -3,13 +3,13 @@
 	<!-- reference task information -->
 	<Reference>
 		<Author>
-			<name>Dawid Kaczmarek</name>
+			<name>Tomasz Kornuta</name>
 			<link></link>
 		</Author>
 	
 		<Description>
-			<brief>Displays point cloud generated from stereo</brief>
-			<full>Displays point clouds generated from a sequence of stereo-images (LR). Enables writing of point cloud to PCD files.</full>
+			<brief>Displays point cloud generated from textured stereo and saves them to RGB-XYZ files.</brief>
+			<full>Displays point clouds generated from a sequence of stereo-images (LR) with and without texture. Enables writing of files containing RGB and XYZ channels.</full>
 		</Description>
 	</Reference>
 
