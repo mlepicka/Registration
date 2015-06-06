@@ -39,13 +39,13 @@
 
 
 				<Component name="SequenceLeft" type="CvBasic:Sequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_original/</param>
 					<param name="sequence.pattern">Window1_.*\.png</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_image">0</param>						
 				</Component>
 				<Component name="SequenceRight" type="CvBasic:Sequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_original/</param>
 					<param name="sequence.pattern">Window0_.*\.png</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_image">0</param>					
@@ -53,13 +53,13 @@
 
 
 				<Component name="TexturedSequenceLeft" type="CvBasic:Sequence" priority="13" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_textured/</param>
 					<param name="sequence.pattern">Window1_.*\.png</param>
 					<param name="mode.loop">1</param>
 					<param name="mode.auto_next_image">0</param>						
 				</Component>
 				<Component name="TexturedSequenceRight" type="CvBasic:Sequence" priority="14" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_textured/</param>
 					<param name="sequence.pattern">Window0_.*\.png</param>
 					<param name="mode.loop">1</param>
 					<param name="mode.auto_next_image">0</param>					
@@ -90,7 +90,7 @@
 				</Component>
 
 				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="21" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbxyz</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_rgbxyz</param>
 					<param name="count">2</param>
 					<param name="digits">1</param>
 					<param name="base_name">rgb,xyz</param>

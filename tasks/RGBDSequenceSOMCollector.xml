@@ -31,14 +31,14 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_rgbdrainbow_kinect/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_rgbdrainbow_kinect/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -158,7 +158,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_kinect_icp_c/</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_views_kinect_icp_c/</param>
 					<param name="base_name">lipton</param>
 					<param name="binary">1</param>
 				</Component>
