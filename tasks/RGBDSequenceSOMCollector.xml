@@ -8,8 +8,8 @@
 		</Author>
 		
 		<Description>
-			<brief>RGBDSequenceObjectFragmentCollector</brief>
-			<full>Loads colour and depth images, localizes reference frame of the board, extract mask, transforms them into point clouds from the area represented by the mask and  and displays point clouds wrt board reference frame.</full>
+			<brief>RGBDSequenceSOMCollector</brief>
+			<full>Loads colour and depth images, localizes reference frame of the board, extract mask, transforms them into point clouds from the area represented by the mask, extracts SIFT features and displays resulting point clouds wrt board reference frame.</full>
 		</Description>
 	</Reference>
 	
@@ -27,22 +27,20 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                                        <param name="auto_trigger">0</param>
+                                        <param name="auto_trigger">1</param>
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>-->
 					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
-                                        <param name="mode.loop">1</param>
+                                        <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/rgbd_mieta/</param>-->
 					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
-                                        <param name="mode.loop">1</param>
+                                        <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
@@ -104,10 +102,26 @@
 					<param name="RedAxis(Z).Z_Min">0.015</param>
 				</Component>
 
-				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="22" bump="0">
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Generation of sparse SIFT cloud
+<!--------------------------------------------------------------------------------------------------------------------->
+
+                                <Component name="SIFT" type="CvBasic:CvSIFT" priority="30" bump="0">
 				</Component>
 
-				<Component name="StatisticalOutlierRemoval" type="PCL:StatisticalOutlierRemoval" priority="24" bump="0">
+                                <Component name="SIFT2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
+				</Component>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Processing point clouds from NOW ON!
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="32" bump="0">
+				</Component>
+
+				<Component name="StatisticalOutlierRemoval" type="PCL:StatisticalOutlierRemoval" priority="33" bump="0">
 					<param name="MeanK">100</param>
 					<param name="StddevMulThresh">0.001</param>
 				</Component>
@@ -117,14 +131,14 @@
 <!--                              Registration
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="30" bump="0">
+				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="40" bump="0">
 				</Component>
 
-				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="31" bump="0">
+				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
 				</Component>
 
-				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="32" bump="1">
-					<param name="Mode.ICP">0</param>
+				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="42" bump="1">
+					<param name="Mode.ICP">1</param>
 					<param name="ICP.UseColour">1</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
@@ -133,38 +147,25 @@
 					<param name="ICP.TransformationEpsilon">1e-20</param>
 				</Component>
 
-				<Component name="CloudStorage" type="Registration:CloudStorage" priority="33" bump="0">
+				<Component name="CloudStorage" type="Registration:CloudStorage" priority="43" bump="0">
+					<param name="CloudsLimit">1</param>
+					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
 
 <!--------------------------------------------------------------------------------------------------------------------->
-<!--                              Visualization
+<!--                              Visualization and saving
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="99" bump="0">
+				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_kinect_icp_c/</param>
+					<param name="base_name">lipton</param>
+					<param name="binary">1</param>
 				</Component>
-
-				<Component name="Draw" type="CvBasic:DrawCoordinateSystem" priority="100">
-				</Component><!---->
-
-				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="101" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
-					<param name="count">3</param>
-					<param name="digits">2</param>
-					<param name="base_name">rgb,rainbow_transformed,mask</param>
-					<param name="format">png,png,png</param>
-					<param name="mode.auto_trigger">0</param>
-				</Component>
-
-				<Component name="Window" type="CvBasic:CvWindow" priority="102" bump="0">
-					<param name="count">3</param>
-					<param name="title">Board Pose, Depth, Mask</param>
-				</Component><!---->
-
 
 			</Executor>
 		</Subtask>
-		
+
 		<Subtask name="Visualisation">
 			<Executor name="Exec2" period="0.2">
 				<Component name="Viewer" type="PCL:CloudViewer" priority="103" bump="0">
@@ -172,7 +173,7 @@
                                         <param name="coordinate_system">0</param>
 				</Component>
 			</Executor>
-		</Subtask>	
+		</Subtask>
 	
 	</Subtasks>
 
@@ -187,11 +188,13 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Sources
 <!--------------------------------------------------------------------------------------------------------------------->
+
 		<Source name="Trigger.out_trigger">
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>DepthSequence.in_next_image_trigger</sink>
-<!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
+			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
+			<sink>Writer.in_save_cloud_trigger</sink><!---->
 		</Source>
 
 		<Source name="DepthSequence.out_img">
@@ -200,37 +203,33 @@
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
+			<sink>SIFT.in_img</sink>
 			<sink>DetectCircles.in_img</sink>
 			<sink>DetectCirclesInv.in_img</sink>
-			<sink>Window.in_img0</sink> <!--DRAW-->	
-			<sink>ImageWriter.in_img0</sink>		
-		</Source>		
+		</Source>
+
+		<Source name="RGBSequence.out_end_of_sequence_trigger">
+			<sink>Trigger.in_stop_auto_trigger</sink>
+		</Source>
+
 		<Source name="CameraInfo.out_camera_info">
 			<sink>D2XYZConverter.in_camera_info</sink>
 			<sink>SolvePNP.in_camera_info</sink>
 			<sink>SolvePNPinv.in_camera_info</sink>
-			<sink>Draw.in_camera_matrix</sink> <!--DRAW-->
 		</Source>
 
 		<Source name="D2XYZConverter.out_img">
 		  	<sink>DepthTransform.in_image_xyz</sink>
  		</Source>
 
-		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
-			<sink>Window.in_img1</sink><!--DRAW-->
-			<sink>ImageWriter.in_img1</sink>		
-		</Source>
-
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                                     Board pose estimation
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="DetectCircles.out_pattern">
-			<sink>Window.in_draw0</sink> <!--DRAW-->
 			<sink>SolvePNP.in_object3d</sink>		
 		</Source>
 		<Source name="DetectCirclesInv.out_pattern">
-			<sink>Window.in_draw0</sink> <!--DRAW-->
 			<sink>SolvePNPinv.in_object3d</sink>	
 		</Source>
 
@@ -241,13 +240,8 @@
 			<sink>SolveLocation.in_homogMatrix</sink>
 		</Source>
 		<Source name= "SolveLocation.out_homogMatrix">
-			<sink>Draw.in_homogMatrix</sink> <!--DRAW-->
 			<sink>DepthTransform.in_homogMatrix</sink>
 		</Source>
-
-		<Source name="Draw.out_csystem">
-			<sink>Window.in_draw0</sink>		
-		</Source> <!--DRAW-->
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Extraction of fragment of cloud constituting the object
@@ -256,14 +250,13 @@
 		<Source name="DepthTransform.out_image_xyz">
 			<sink>BoardExtractor.in_image_xyz</sink>
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
-			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!--DRAW-->
+			<sink>SIFT2SPCConverter.in_depth_xyz</sink>
 		</Source>
 
 
 		<Source name="BoardExtractor.out_mask">
 			<sink>RGBXYZM2PCConverter.in_mask</sink>
-			<sink>Window.in_img2</sink><!--DRAW-->
-			<sink>ImageWriter.in_img2</sink>		
+			<sink>SIFT2SPCConverter.in_mask</sink>
 		 </Source>
 
 		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
@@ -273,6 +266,22 @@
 
 		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
 			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
+		</Source>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Generation of sparse SIFT cloud
+<!--------------------------------------------------------------------------------------------------------------------->
+
+		<Source name="SIFT.out_descriptors">
+			<sink>SIFT2SPCConverter.in_descriptors</sink>	
+		</Source>
+		<Source name="SIFT.out_features">
+			<sink>SIFT2SPCConverter.in_features</sink>	
+		</Source>	
+
+		<Source name="SIFT2SPCConverter.out_cloud_xyzsift">
+			<sink>CloudTransformer.in_cloud_xyzsift</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -288,6 +297,9 @@
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
 		</Source>
 
+		<Source name= "CloudTransformer.out_cloud_xyzsift">
+			<sink>CloudStorage.in_cloud_xyzsift</sink>
+		</Source>
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>
@@ -299,11 +311,15 @@
 
 		<Source name="CloudStorage.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>
+			<sink>Writer.in_cloud_xyzrgb</sink>
 		</Source>
+
+		<Source name="CloudStorage.out_cloud_xyzsift">
+			<sink>Viewer.in_cloud_xyzsift</sink>
+			<sink>Writer.in_cloud_xyzsift</sink>
+		</Source>-->
 
 	</DataStreams>
 </Task>
-
-
 
 

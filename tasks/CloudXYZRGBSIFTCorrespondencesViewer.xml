@@ -34,7 +34,7 @@
 				</Component>
 
 				<Component name="FirstSequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -43,7 +43,7 @@
 				</Component>
 
 				<Component name="FirstSequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -52,7 +52,7 @@
 				</Component>
 
 				<Component name="SecondSequenceCloudXYZRGB" type="PCL:PCDSequence" priority="13" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -61,7 +61,7 @@
 				</Component>
 
 				<Component name="SecondSequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="14" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
