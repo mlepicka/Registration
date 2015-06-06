@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+	
+		<Description>
+			<brief>Displays stereo sequence (LR)</brief>
+			<full>Displays a sequence of left and right images acquired from a stereo pair.</full>
+		</Description>
+	</Reference>
+
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Processing" period="1">
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+				</Component>
+				<Component name="SequenceLeft" type="CvBasic:Sequence" priority="2" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.pattern">Window1_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.triggered">1</param>						
+				</Component>
+				<Component name="SequenceRight" type="CvBasic:Sequence" priority="3" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_original/</param>
+					<param name="sequence.pattern">Window0_.*\.png</param>
+					<param name="mode.loop">1</param>
+					<param name="mode.triggered">1</param>					
+				</Component>
+			</Executor>
+		</Subtask>	
+
+		<Subtask name="Display">
+			<Executor name="Display" period="1">
+				<Component name="Window" type="CvBasic:CvWindow" priority="1" bump="0">
+					<param name="count">2</param>
+					<param name="title">Left, Right</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+	</Subtasks>
+	
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+		<Source name="NextImageTrigger.out_trigger">
+			<sink>SequenceLeft.in_trigger</sink>
+			<sink>SequenceRight.in_trigger</sink>
+		</Source>
+		<Source name="SequenceLeft.out_img">
+			<sink>Window.in_img0</sink>
+		</Source>
+		<Source name="SequenceRight.out_img">
+			<sink>Window.in_img1</sink>
+		</Source>
+	</DataStreams>
+</Task>
+

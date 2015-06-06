@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+	
+		<Description>
+			<brief>Displays a sequence of stereo (RGB and depth XYZ) images</brief>
+			<full>Displays a sequence of stereo (RGB and depth XYZ) images generated from pairs of left-right (LR) camera images. Enables writing of RGB-XYZ pairs to files (in png and yml format respectivelly).</full>
+		</Description>
+	</Reference>
+
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="ExecDisp" period="2">
+				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
+				</Component>
+
+				<Component name="CameraInfoLeft" type="CvCoreTypes:CameraInfoProvider" priority="2" bump="0">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/left.yml</param>
+
+				</Component>
+
+				<Component name="CameraInfoRight" type="CvCoreTypes:CameraInfoProvider" priority="3" bump="0">
+					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/right.yml</param>
+				</Component>
+
+				<Component name="SequenceLeft" type="CvBasic:Sequence" priority="11" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.pattern">Window1_.*\.png</param>
+					<param name="mode.loop">0</param>
+					<param name="mode.auto_next_image">0</param>						
+				</Component>
+
+				<Component name="SequenceRight" type="CvBasic:Sequence" priority="12" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_textured/</param>
+					<param name="sequence.pattern">Window0_.*\.png</param>
+					<param name="mode.loop">0</param>
+					<param name="mode.auto_next_image">0</param>					
+				</Component>
+
+
+				<Component name="StereoEstimator" type="CvStereo:StereoEstimator" priority="20" bump="0">
+					<param name="minDisparity">80</param>
+					<param name="numberOfDisparities">160</param>
+					<param name="uniquenessRatio">25</param>
+				</Component>
+				<Component name="DepthRainbow" type="CvStereo:DepthRainbow" priority="21" bump="0">
+				</Component>
+			</Executor>
+
+			<Executor name="WriterExec" period="1">
+				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="100" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
+					<param name="count">3</param>
+					<param name="digits">1</param>
+					<param name="base_name">rgb,depth,rainbow</param>
+					<param name="format">png,yml,png</param>
+					<param name="mode.auto_trigger">0</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+
+		<Subtask name="Display">
+			<Executor name="DisplayExec" period="0.5">
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB, Depth, Rainbow</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+	</Subtasks>
+	
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+		<Source name="NextImageTrigger.out_trigger">
+			<sink>SequenceLeft.in_next_image_trigger</sink>
+			<sink>SequenceRight.in_next_image_trigger</sink>
+		</Source>
+		<Source name="SequenceLeft.out_img">
+			<sink>StereoEstimator.l_in_img</sink>
+		</Source>
+		<Source name="SequenceRight.out_img">
+			<sink>StereoEstimator.r_in_img</sink>
+		</Source>
+		<Source name="CameraInfoLeft.out_camera_info">
+			<sink>StereoEstimator.l_cam_info</sink>
+		</Source>
+		<Source name="CameraInfoRight.out_camera_info">
+			<sink>StereoEstimator.r_cam_info</sink>
+		</Source>
+		<Source name="StereoEstimator.out_rgb_stereo">
+			<sink>ImageWriter.in_img0</sink>
+			<sink>Window.in_img0</sink>
+		</Source>
+		<Source name="StereoEstimator.out_depth_xyz">
+			<sink>DepthRainbow.in_depth_xyz</sink>
+			<sink>Window.in_img1</sink>
+			<sink>ImageWriter.in_img1</sink>
+		</Source>
+		<Source name="DepthRainbow.out_depth_rainbow">
+			<sink>Window.in_img2</sink>
+			<sink>ImageWriter.in_img2</sink>
+		</Source>
+	</DataStreams>
+</Task>
+

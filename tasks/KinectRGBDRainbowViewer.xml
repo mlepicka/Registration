@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+		
+		<Description>
+			<brief>Simple Kinect viewer</brief>
+			<full>Displays RGB image with the associated depth map, allows saving of both color and depth to png file with a proper data format.</full>	
+		</Description>
+	</Reference>
+	
+	<!-- task definition -->
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Exec1"  period="0.1">
+				<Component name="Source" type="CameraNUI:CameraNUI" priority="1" bump="0">
+					<param name="sync">1</param>
+				</Component>
+				
+				<Component name="ProcRain" type="CameraNUI:DepthConverter" priority="2" bump="0">
+					<param name="depth_mode">rainbow</param>
+				</Component>
+				
+				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="100" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
+					<param name="count">3</param>
+					<param name="digits">2</param>
+					<param name="base_name">rgb,depth,rainbow</param>
+					<param name="format">png,png,png</param>
+					<param name="auto_trigger">0</param>
+				</Component>
+			</Executor>
+		</Subtask>
+		
+		<Subtask name="Visualization">
+			<Executor name="Exec2" period="0.1">
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,Depth,Rainbow</param>
+				</Component>
+			</Executor>
+		</Subtask>	
+
+
+
+	</Subtasks>
+		
+	<!-- pipes connecting datastreams -->
+	<DataStreams>
+		<Source name="Source.out_img">
+			<sink>Window.in_img0</sink>		
+			<sink>ImageWriter.in_img0</sink>		
+		</Source>
+		<Source name="Source.out_depth">
+			<sink>ProcRain.in_depth</sink>
+			<sink>Window.in_img1</sink>		
+			<sink>ImageWriter.in_img1</sink>		
+		</Source>
+		<Source name="ProcRain.out_depth">
+			<sink>Window.in_img2</sink>		
+			<sink>ImageWriter.in_img2</sink>		
+		</Source>
+	</DataStreams>
+</Task>
+
+
+
+

@@ -107,7 +107,7 @@
                                         <param name="inverse">1</param>
 				</Component>
 
-<!--				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="25" bump="0">
+				<Component name="XYZ2RainbowTransformed" type="CvStereo:DepthRainbow" priority="25" bump="0">
 					<param name="fixed_range"> 1</param>
 					<param name="min_range"> -0.5</param>
 					<param name="max_range"> 1 </param>
@@ -174,9 +174,19 @@
 				<Component name="WideDraw" type="CvBasic:DrawCoordinateSystem" priority="101">
 				</Component>
 
-<!--				<Component name="Window" type="CvBasic:CvWindow" priority="103" bump="0">
+				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="102" bump="0">
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
 					<param name="count">3</param>
-					<param name="title">RGB,XYZ,Wide</param>
+					<param name="digits">2</param>
+					<param name="base_name">rgb,rainbow_transformed,mask</param>
+					<param name="format">png,png,png</param>
+					<param name="auto_trigger">0</param>
+				</Component>
+
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="103" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,Rainbow,Mask</param>
 				</Component><!---->
 
 			</Executor>
@@ -211,7 +221,7 @@
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
 			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
-			<sink>Writer.in_save_cloud_trigger</sink>
+<!--			<sink>Writer.in_save_cloud_trigger</sink>-->
 		</Source>
 
 		<Source name="XYZSequence.out_img">
@@ -220,7 +230,8 @@
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
-<!--			<sink>Window.in_img0</sink><!---->
+			<sink>Window.in_img0</sink><!---->
+			<sink>ImageWriter.in_img0</sink>		
 		</Source>
 
 		<Source name="WideRGBSequence.out_img">
@@ -288,18 +299,21 @@
 
 
 		<Source name="Wide2BoardTransformation.out_image_xyz">
-<!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!---->
+			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!---->
 			<sink>BoardExtractor.in_image_xyz</sink>
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
 		</Source>
 
 
-<!--		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
+		<Source name="XYZ2RainbowTransformed.out_depth_rainbow">
 			<sink>Window.in_img1</sink>
+			<sink>ImageWriter.in_img1</sink>		
 		</Source><!---->
 
 		<Source name="BoardExtractor.out_mask">
 			<sink>RGBXYZM2PCConverter.in_mask</sink>
+			<sink>Window.in_img2</sink>
+			<sink>ImageWriter.in_img2</sink>		
 		 </Source>
 
 		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
