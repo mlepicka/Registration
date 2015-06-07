@@ -30,7 +30,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_views_no_icp/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_views_kinect_icp_c/</param>
 <!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>-->
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
@@ -40,7 +40,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/lejek_views_no_icp/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_views_kinect_icp_c/</param>
 <!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>-->
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
@@ -55,13 +55,13 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="PassThrough1" type="PCL:PassThrough" priority="20" bump="0">
-					<param name="pass_through">0</param>
+					<param name="pass_through">1</param>
                                         <param name="x.min">-1</param>
                                         <param name="x.max">1</param>
                                         <param name="y.min">-1</param>
                                         <param name="y.max">1</param>
-                                        <param name="z.min">0.025</param>
-                                        <param name="z.max">0.11</param>
+                                        <param name="z.min">0.02</param>
+                                        <param name="z.max">0.21</param>
 				</Component>
 
 				<Component name="PassThrough2" type="PCL:PassThrough" priority="21" bump="0">
@@ -113,7 +113,7 @@
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
 					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/</param>
-					<param name="base_name">cukier_no_icp_kinect</param>
+					<param name="base_name">cukier_no_icp</param>
 					<param name="binary">1</param>
 				</Component>
 

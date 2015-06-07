@@ -26,7 +26,7 @@
 				</Component>
 				
 				<Component name="ImageWriter" type="CvBasic:ImageWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/lipton_1_rgbdrainbow_kinect/</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/redbull_rgbdrainbow_kinect/</param>
 					<param name="count">3</param>
 					<param name="digits">2</param>
 					<param name="base_name">rgb,depth,rainbow</param>
