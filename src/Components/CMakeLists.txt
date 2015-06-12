@@ -7,3 +7,5 @@ ADD_COMPONENT(CloudStorageLUM)
 
 ADD_COMPONENT(CorrespondenceEstimation)
 
+ADD_COMPONENT(CorrespondenceViewer)
+

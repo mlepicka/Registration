@@ -59,7 +59,7 @@
 					<param name="count">3</param>
 					<param name="digits">1</param>
 					<param name="base_name">rgb,depth,rainbow</param>
-					<param name="format">png,yml,png</param>
+					<param name="format">png,yml.gz,png</param>
 					<param name="mode.auto_trigger">0</param>
 				</Component>
 			</Executor>

@@ -31,14 +31,14 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_rgbxyz/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_rgbxyz/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
 					<param name="sequence.pattern">.*_xyz.yml</param>
                                         <param name="mode.loop">1</param>
                                         <param name="mode.auto_next_image">0</param>

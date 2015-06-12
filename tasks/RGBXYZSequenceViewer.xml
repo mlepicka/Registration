@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Task>
+	<!-- reference task information -->
+	<Reference>
+		<Author>
+			<name>Tomasz Kornuta</name>
+			<link></link>
+		</Author>
+		
+		<Description>
+			<brief>RGBXYZSequenceViewer</brief>
+			<full>Loads and displays colour and XYZ images.</full>
+		</Description>
+	</Reference>
+	
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- task definition -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+
+	<Subtasks>
+		<Subtask name="Processing">
+			<Executor name="Processing"  period="1">
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
+                                        <param name="auto_trigger">0</param>
+				</Component>
+
+				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
+					<param name="sequence.pattern">.*_rgb.png</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
+					<param name="sequence.pattern">.*_xyz.yml.gz</param>
+                                        <param name="mode.loop">1</param>
+                                        <param name="mode.auto_next_image">0</param>
+				</Component>
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Visualization
+<!--------------------------------------------------------------------------------------------------------------------->
+
+				<Component name="XYZ2Rainbow" type="CvStereo:DepthRainbow" priority="21" bump="0">
+				</Component>
+
+				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="91" bump="0">
+				</Component>
+
+			</Executor>
+		</Subtask>
+		
+		<Subtask name="Visualisation">
+			<Executor name="Exec2" period="0.2">
+				<Component name="Viewer" type="PCL:CloudViewer" priority="100" bump="0">
+					<param name="title">Model point cloud</param>
+                                        <param name="coordinate_system">1</param>
+				</Component>
+
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,XYZ,Rainbow</param>
+				</Component>
+
+
+			</Executor>
+		</Subtask>	
+
+	</Subtasks>
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!-- pipes connecting datastreams -->
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--------------------------------------------------------------------------------------------------------------------->
+	
+	<DataStreams>
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                                     Sources
+<!--------------------------------------------------------------------------------------------------------------------->
+		<Source name="Trigger.out_trigger">
+			<sink>RGBSequence.in_next_image_trigger</sink>
+			<sink>XYZSequence.in_next_image_trigger</sink>
+		</Source>
+
+		<Source name="XYZSequence.out_img">
+			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
+			<sink>XYZ2Rainbow.in_depth_xyz</sink>
+			<sink>Window.in_img1</sink>
+		</Source>	
+	
+		<Source name="RGBSequence.out_img">
+			<sink>RGBXYZM2PCConverter.in_color</sink>
+			<sink>Window.in_img0</sink>
+		</Source>
+
+		<Source name="XYZ2Rainbow.out_depth_rainbow">
+			<sink>Window.in_img2</sink>
+		</Source>
+
+
+
+<!--------------------------------------------------------------------------------------------------------------------->
+<!--                              Visualization
+<!--------------------------------------------------------------------------------------------------------------------->
+
+
+		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
+			<sink>Viewer.in_cloud_xyzrgb</sink>
+		</Source>
+
+	</DataStreams>
+</Task>
+
+
+
+
