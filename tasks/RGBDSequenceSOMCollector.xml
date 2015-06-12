@@ -27,7 +27,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                                        <param name="auto_trigger">1</param>
+                                        <param name="auto_trigger">0</param>
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
@@ -148,7 +148,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="43" bump="0">
-					<param name="CloudsLimit">1</param>
+                                        <param name="CloudsLimit">0</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -192,9 +192,9 @@
 		<Source name="Trigger.out_trigger">
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>DepthSequence.in_next_image_trigger</sink>
-			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
-			<sink>CloudStorage.in_add_cloud_trigger</sink>
-			<sink>Writer.in_save_cloud_trigger</sink><!---->
+                        <sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
+                        <sink>CloudStorage.in_add_cloud_trigger</sink>
+<!--			<sink>Writer.in_save_cloud_trigger</sink><!---->
 		</Source>
 
 		<Source name="DepthSequence.out_img">

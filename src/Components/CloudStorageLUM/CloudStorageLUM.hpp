@@ -84,9 +84,6 @@ protected:
 	/// Trigger - used for adding cloud to storage.
 	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_add_cloud_trigger;
 
-	/// Trigger - used for returning previous cloud.
-	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_publish_previous_cloud_trigger;
-
 	/// Input data stream containing the SLAM graph which will be used.
 	Base::DataStreamIn<pcl::registration::LUM<PointXYZSIFT>::Ptr> in_lum_xyzsift;
 
@@ -173,6 +170,8 @@ protected:
 	/// Publishes clouds merged from currently possesed vectors of clouds.
 	void publish_merged_clouds();
 
+    /// Return previous (single or merged) cloud.
+    void return_previous_cloud();
 
 	/// Event handler function - sets publishPreviousCloud_flag to true.
 	void onPublishPreviousButtonPressed();

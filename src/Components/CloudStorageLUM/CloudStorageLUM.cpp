@@ -58,8 +58,6 @@ void CloudStorageLUM::prepareInterface() {
 	registerStream("in_transformation", &in_transformation);
 	registerStream("in_add_cloud_trigger", &in_add_cloud_trigger);
 	registerStream("in_lum_xyzsift", &in_lum_xyzsift);
-	registerStream("in_publish_previous_cloud_trigger", &in_publish_previous_cloud_trigger);
-
 
 	// Register output data streams.
 	registerStream("out_cloud_xyzrgb", &out_cloud_xyzrgb);
@@ -77,14 +75,10 @@ void CloudStorageLUM::prepareInterface() {
 	registerHandler("Add cloud", boost::bind(&CloudStorageLUM::onAddCloudButtonPressed, this));
 	registerHandler("Remove last cloud", boost::bind(&CloudStorageLUM::onRemoveLastCloudButtonPressed, this));
 	registerHandler("Clear storage", boost::bind(&CloudStorageLUM::onClearStorageButtonPressed, this));
-	registerHandler("Publish previous cloud", boost::bind(&CloudStorageLUM::onPublishPreviousButtonPressed, this));
 
 	// Register externally-triggered handler.
 	registerHandler("onAddCloudTriggered", boost::bind(&CloudStorageLUM::onAddCloudTriggered, this));
 	addDependency("onAddCloudTriggered", &in_add_cloud_trigger);
-
-	registerHandler("onReturnPreviousCloudTriggered", boost::bind(&CloudStorageLUM::onReturnPreviousCloudTriggered, this));
-	addDependency("onReturnPreviousCloudTriggered", &in_publish_previous_cloud_trigger);
 
 	registerHandler("LUM publish graph", boost::bind(&CloudStorageLUM::onPublishLUMGraphSLAMButtonPressed, this));
 
@@ -108,7 +102,6 @@ bool CloudStorageLUM::onInit() {
 	// Initialize flags.
 	remove_last_cloud_flag = false;
 	clear_storage_flag = false;
-	publishPreviousCloud_flag = false;
 	publishLumGraphSlam_flag = false;
 	generateLumGraphSlam_flag = false;
 	publishSrcTrgCorrs_flag = false;
@@ -159,18 +152,6 @@ void CloudStorageLUM::onRemoveLastCloudButtonPressed(){
 void CloudStorageLUM::onClearStorageButtonPressed(){
 	CLOG(LTRACE) << "onClearStorageButtonPressed";
 	clear_storage_flag = true;
-}
-
-
-void CloudStorageLUM::onPublishPreviousButtonPressed(){
-	CLOG(LDEBUG) << "onPublishPreviousButtonPressed";
-	publishPreviousCloud_flag = true;
-}
-
-void CloudStorageLUM::onReturnPreviousCloudTriggered(){
-	CLOG(LDEBUG) << "onReturnPreviousCloudTriggered";
-	in_publish_previous_cloud_trigger.read();
-	publishPreviousCloud_flag = true;
 }
 
 
@@ -232,10 +213,8 @@ void CloudStorageLUM::update_storage(){
 	// Publish cloud merged from currently possesed ones.
 	publish_merged_clouds();
 
-	// Return previous (single or merged) cloud.
-	if (publishPreviousCloud_flag)
-		publishPreviousCloud();
-
+    // Publish previous (single or merged) cloud.
+    publishPreviousCloud();
 }
 
 
@@ -364,7 +343,6 @@ void CloudStorageLUM::publish_merged_clouds(){
 
 void CloudStorageLUM::publishPreviousCloud(){
 	CLOG(LTRACE) << "publishPreviousCloud";
-	publishPreviousCloud_flag = false;
 
 	CLOG(LDEBUG) << "transformations.size(): "<< transformations.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size();
 

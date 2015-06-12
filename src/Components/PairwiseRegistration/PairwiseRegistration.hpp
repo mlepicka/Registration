@@ -87,6 +87,9 @@ protected:
 	/// Source (previous) cloud, to which the component will try to align.
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb;
 
+    /// Trigger - used for returning previous cloud.
+    Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_save_src_cloud_trigger;
+
 
 	/****************** ICP PROPERTIES ***********************/
 

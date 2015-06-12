@@ -190,8 +190,8 @@
 		<Source name="Trigger.out_trigger">
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>DepthSequence.in_next_image_trigger</sink>
-<!--			<sink>CloudStorage.in_return_previous_cloud_trigger</sink><!---->
-			<sink>CloudStorage.in_add_cloud_trigger</sink>
+                        <sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
+                        <sink>CloudStorage.in_add_cloud_trigger</sink>
 		</Source>
 
 		<Source name="DepthSequence.out_img">

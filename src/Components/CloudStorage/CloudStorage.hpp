@@ -84,9 +84,6 @@ protected:
 	/// Trigger - used for adding cloud to storage.
 	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_add_cloud_trigger;
 
-	/// Trigger - used for returning previous cloud.
-	Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_return_previous_cloud_trigger;
-
 	// Output stream containing merged XYZ cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZ>::Ptr> out_cloud_xyz;
 
@@ -113,16 +110,6 @@ protected:
 	///  Property - maximal number of stored clouds. The 0 value deactivates the limit. If reached, removes clouds from start of the list (resulting in a cyclic buffer).
 	Base::Property<int> prop_clouds_limit;
 
-
-	/// Registration handler - activated when 
-/*	void pairwise_registration();
-
-	/// Aligns XYZ clouds.
-	void registration_xyz(Types::HomogMatrix hm_);
-
-	/// Aligns XYZRGB clouds.
-	void registration_xyzrgb(Types::HomogMatrix hm_);
-*/
 
 
 	/// Event handler function - adds point cloud to the storage.
@@ -157,14 +144,7 @@ protected:
 	/// Publishes clouds merged from currently possesed vectors of clouds.
 	void publish_merged_clouds();
 
-
-	/// Event handler function - return previous cloud.
-	void onReturnPreviousButtonPressed();
-
-	/// Event handler function - store previous cloud, externally triggered version.
-	void onReturnPreviousCloudTriggered();
-
-	// Return previous (single or merged) cloud.
+    /// Return previous (single or merged) cloud.
 	void return_previous_cloud();
 
 
@@ -189,9 +169,6 @@ private:
 
 	// Vector containing XYZSIFT clouds.
 	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr> clouds_xyzsift;
-
-	/// Flag indicating whether the one of the previous cloud (one or merged) should be returned as previous (i.e. to which the registration will be made in the next step).
-	bool return_previous_cloud_flag;
 
 };
 

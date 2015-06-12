@@ -101,16 +101,14 @@ PairwiseRegistration::~PairwiseRegistration() {
 
 void PairwiseRegistration::prepareInterface() {
 	// Register data streams.
-//	registerStream("in_trg_cloud_xyz", &in_trg_cloud_xyz); : TODO
 	registerStream("in_trg_cloud_xyzrgb", &in_trg_cloud_xyzrgb);
 	registerStream("in_src_cloud_xyzrgb", &in_src_cloud_xyzrgb);
-	registerStream("out_transformation_xyz", &out_transformation_xyz);
+    registerStream("in_save_src_cloud_trigger", &in_save_src_cloud_trigger);
+    registerStream("out_transformation_xyz", &out_transformation_xyz);
 	registerStream("out_transformation_xyzrgb", &out_transformation_xyzrgb);
 
-	// Register handlers
-//	registerHandler("pairwise_registration_xyz", boost::bind(&PairwiseRegistration::pairwise_registration_xyz, this));
-//	addDependency("pairwise_registration_xyz", &in_trg_cloud_xyz);
 
+	// Register handlers
 	registerHandler("pairwise_registration_xyzrgb", boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb, this));
 	addDependency("pairwise_registration_xyzrgb", &in_trg_cloud_xyzrgb);
 }
@@ -134,17 +132,6 @@ bool PairwiseRegistration::onStart() {
 	return true;
 }
 
-/*void  PairwiseRegistration::pairwise_registration_xyz(){
-	CLOG(LTRACE) << "pariwise_registration_xyz";
-	pcl::PointCloud<pcl::PointXYZ>::Ptr trg_cloud = in_trg_cloud_xyz.read();
-
-	CLOG(LERROR) << "registration_xyz NOT IMPLEMENTED!";
-
-	// Return identity matrix as transformation XYZ.
-	Types::HomogMatrix result;
-	result.setIdentity();
-	out_transformation_xyz.write(result);
-}*/
 
 Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb_){
 	CLOG(LTRACE) << "pairwise_icp_based_registration_xyzrgb";
@@ -379,10 +366,11 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	// Read current cloud from port.
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb = in_trg_cloud_xyzrgb.read();
 
-	// Check whether previous cloud is received.
-	if (!in_src_cloud_xyzrgb.empty()) {
+    // Check whether source cloud is received and is required to save.
+    if ((!in_src_cloud_xyzrgb.empty()) && (!in_save_src_cloud_trigger.empty())) {
 		CLOG(LINFO) << "Storing source cloud";
 		src_cloud_xyzrgb = in_src_cloud_xyzrgb.read();
+        in_save_src_cloud_trigger.read();
 		// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
 	}//: if
 
@@ -407,35 +395,7 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 
 
 
-/*
-http://www.pcl-users.org/Very-poor-registration-results-td3569265.html
 
-http://pointclouds.org/documentation/tutorials/template_alignment.php#template-alignment
-
-  // Compute surface normals and curvature
-  PointCloudWithNormals::Ptr src_cloud_xyznormals (new PointCloudWithNormals);
-  PointCloudWithNormals::Ptr transformed_trg_cloud_xyznormals (new PointCloudWithNormals);
-
-  pcl::NormalEstimation<PointT, pcl::PointNormal> norm_est;
-  pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
-  norm_est.setSearchMethod (tree);
-  norm_est.setKSearch (30);
-  
-  norm_est.setInputCloud (src);
-  norm_est.compute (*src_cloud_xyznormals);
-  pcl::copyPointCloud (*src, *src_cloud_xyznormals);
-
-  norm_est.setInputCloud (tgt);
-  norm_est.compute (*transformed_trg_cloud_xyznormals);
-  pcl::copyPointCloud (*tgt, *transformed_trg_cloud_xyznormals);
-
-  //
-  // Instantiate our custom point representation (defined above) ...
-  MyPointRepresentation point_representation;
-  // ... and weight the 'curvature' dimension so that it is balanced against x, y, and z
-  float alpha[4] = {1.0, 1.0, 1.0, 1.0};
-  point_representation.setRescaleValues (alpha);
-*/
 
 } //: namespace PairwiseRegistration
 } //: namespace Processors
