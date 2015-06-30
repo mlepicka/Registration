@@ -30,8 +30,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_views_kinect_icp_c/</param>
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>-->
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -40,8 +39,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_views_kinect_icp_c/</param>
-<!--					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>-->
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -56,12 +54,12 @@
 
 				<Component name="PassThrough1" type="PCL:PassThrough" priority="20" bump="0">
 					<param name="pass_through">1</param>
-                                        <param name="x.min">-1</param>
-                                        <param name="x.max">1</param>
-                                        <param name="y.min">-1</param>
-                                        <param name="y.max">1</param>
-                                        <param name="z.min">0.02</param>
-                                        <param name="z.max">0.21</param>
+                    <param name="x.min">-1</param>
+                    <param name="x.max">1</param>
+                    <param name="y.min">-1</param>
+                    <param name="y.max">1</param>
+                    <param name="z.min">0.02</param>
+                    <param name="z.max">0.21</param>
 				</Component>
 
 				<Component name="PassThrough2" type="PCL:PassThrough" priority="21" bump="0">
@@ -112,8 +110,8 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/</param>
-					<param name="base_name">cukier_no_icp</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_models</param>
+					<param name="base_name">model</param>
 					<param name="binary">1</param>
 				</Component>
 
@@ -128,8 +126,8 @@
                                         <param name="background_color">255,255,255</param>
 				</Component>
 
-				<Component name="CorrsViewer" type="SIFTObjectModel:CorrespondencesViewer" priority="102" bump="0">
-					<param name="title">Model point cloud</param>
+				<Component name="CorrsViewer" type="Registration:CorrespondenceViewer" priority="102" bump="0">
+					<param name="title">Correspondences</param>
                                         <param name="coordinate_system">0</param>
                                         <param name="tx">-0.05</param>
                                         <param name="ty">0</param>
@@ -155,8 +153,8 @@
 			<sink>SequenceCloudXYZRGB.in_next_cloud_trigger</sink><!---->
 			<sink>SequenceCloudXYZSIFT.in_next_cloud_trigger</sink>
 			<sink>CloudStorageLUM.in_add_cloud_trigger</sink><!---->
-                        <sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
-                </Source>
+			<sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
+		</Source>
 
 		<Source name="SequenceCloudXYZRGB.out_end_of_sequence_trigger">
 			<sink>SequenceTrigger.in_stop_auto_trigger</sink>
@@ -252,19 +250,19 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 		<Source name="CloudStorageLUM.out_src_cloud_xyzrgb">
-			<sink>CorrsViewer.in_cloud_xyzrgb1</sink>
+			<sink>CorrsViewer.in_src_cloud_xyzrgb</sink>
 		</Source><!---->
 
 		<Source name="CloudStorageLUM.out_src_cloud_xyzsift">
-			<sink>CorrsViewer.in_cloud_xyzsift1</sink>
+			<sink>CorrsViewer.in_src_cloud_xyzsift</sink>
 		</Source><!---->
 
 		<Source name="CloudStorageLUM.out_trg_cloud_xyzrgb">
-			<sink>CorrsViewer.in_cloud_xyzrgb2</sink>
+			<sink>CorrsViewer.in_trg_cloud_xyzrgb</sink>
 		</Source><!---->
 
 		<Source name="CloudStorageLUM.out_trg_cloud_xyzsift">
-			<sink>CorrsViewer.in_cloud_xyzsift2</sink>
+			<sink>CorrsViewer.in_trg_cloud_xyzsift</sink>
 		</Source><!---->
 
 		<Source name="CloudStorageLUM.out_src_trg_correspondences">
