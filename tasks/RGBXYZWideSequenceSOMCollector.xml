@@ -31,21 +31,21 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/stereo_rgbxyz/</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/stereo_rgbxyz/</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_xyz.yml</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/wide/</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/wide/</param>
 										<param name="sequence.pattern">.*_wide\.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -160,7 +160,7 @@
 				</Component>
 
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="84" bump="1">
-                    <param name="Mode.ICP">1</param>
+					<param name="Mode.ICP">0</param>
 					<param name="ICP.UseColour">1</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
@@ -170,7 +170,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="85" bump="0">
-                                        <param name="CloudsLimit">0</param>
+                                        <param name="CloudsLimit">1</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -180,7 +180,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-                                        <param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/stereo_views_icp_c/</param>
+                                        <param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_views_no_icp/</param>
 					<param name="base_name">view</param>
 					<param name="binary">1</param>
 				</Component>
@@ -223,7 +223,7 @@
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>XYZSequence.in_next_image_trigger</sink>
 			<sink>WideRGBSequence.in_next_image_trigger</sink>
-            <sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
+			<sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 			<sink>Writer.in_save_cloud_trigger</sink><!---->
 		</Source>

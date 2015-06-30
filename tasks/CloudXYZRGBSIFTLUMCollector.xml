@@ -30,7 +30,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_views_no_icp/</param>
 					<param name="sequence.pattern">.*_xyzrgb.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -39,7 +39,7 @@
 				</Component>
 
 				<Component name="SequenceCloudXYZSIFT" type="PCL:PCDSequence" priority="12" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_views_no_icp/</param>
 					<param name="sequence.pattern">.*_xyzsift.pcd</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
@@ -110,7 +110,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_models</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/models</param>
 					<param name="base_name">model</param>
 					<param name="binary">1</param>
 				</Component>
