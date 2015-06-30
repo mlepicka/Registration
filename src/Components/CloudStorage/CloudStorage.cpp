@@ -240,6 +240,7 @@ void CloudStorage::clear_storage(){
 	transformations.clear();
 	clouds_xyz.clear();
 	clouds_xyzrgb.clear();
+	clouds_xyzsift.clear();
 	// Reset flag.
 	clear_storage_flag = false;
 }

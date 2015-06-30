@@ -27,21 +27,21 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                                        <param name="auto_trigger">0</param>
+                    <param name="auto_trigger">1</param>
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_rgbdrainbow_kinect/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
-                                        <param name="mode.loop">0</param>
-                                        <param name="mode.auto_next_image">0</param>
+                    <param name="mode.loop">0</param>
+                    <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_rgbdrainbow_kinect/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
-                                        <param name="mode.loop">0</param>
-                                        <param name="mode.auto_next_image">0</param>
+                    <param name="mode.loop">0</param>
+                    <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="CameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="4">
@@ -148,7 +148,7 @@
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="43" bump="0">
-                                        <param name="CloudsLimit">0</param>
+                    <param name="CloudsLimit">1</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -158,8 +158,8 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-05-21/zygzag_views_kinect_icp_c/</param>
-					<param name="base_name">lipton</param>
+					<param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
+					<param name="base_name">view</param>
 					<param name="binary">1</param>
 				</Component>
 
@@ -170,7 +170,7 @@
 			<Executor name="Exec2" period="0.2">
 				<Component name="Viewer" type="PCL:CloudViewer" priority="103" bump="0">
 					<param name="title">Model point cloud</param>
-                                        <param name="coordinate_system">0</param>
+                    <param name="coordinate_system">0</param>
 				</Component>
 			</Executor>
 		</Subtask>
@@ -192,9 +192,9 @@
 		<Source name="Trigger.out_trigger">
 			<sink>RGBSequence.in_next_image_trigger</sink>
 			<sink>DepthSequence.in_next_image_trigger</sink>
-                        <sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
-                        <sink>CloudStorage.in_add_cloud_trigger</sink>
-<!--			<sink>Writer.in_save_cloud_trigger</sink><!---->
+			<sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
+			<sink>CloudStorage.in_add_cloud_trigger</sink>
+			<sink>Writer.in_save_cloud_trigger</sink><!---->
 		</Source>
 
 		<Source name="DepthSequence.out_img">
