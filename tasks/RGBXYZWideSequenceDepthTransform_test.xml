@@ -31,28 +31,28 @@
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
-                                        <param name="mode.loop">1</param>
+                                        <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_xyz.yml</param>
-                                        <param name="mode.loop">1</param>
+                                        <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_wide/</param>
-					<param name="sequence.pattern">Window2_.*\.png</param>
-                                        <param name="mode.loop">1</param>
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/wide/</param>
+										<param name="sequence.pattern">.*_wide\.png</param>
+                                        <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="WideCameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="5">
-					<param name="data_file">/home/tkornuta/discode_ecovi/DCL/Registration/data/2015-05-21/wide.yml</param>
+					<param name="data_file">%[TASK_LOCATION]%/../data/2015-06-11/wide.yml</param>
 				</Component>
 
 
@@ -91,12 +91,21 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="20" bump="0">
 <!-- besl & mckay matlab (w*l^(-1))  wide*left^-1 -->
-					<param name="offset.x"> 0.045398668455971</param>
+<!-- 2015-05-21	-->
+<!--					<param name="offset.x"> 0.045398668455971</param>
 					<param name="offset.y"> -0.144593943002057</param>
 					<param name="offset.z"> 0.038911135314459</param>
 					<param name="offset.roll"> 0.314160724927050</param>
 					<param name="offset.pitch"> 0.115930661008144</param>
 					<param name="offset.yaw"> -3.100616598583211</param>-->
+
+<!-- 2015-06-11 estimateRigidTransform(wide_camera_points',left_camera_points') -->
+					<param name="offset.x">-0.047964263754209</param>
+					<param name="offset.y">0.132059601543967</param>
+					<param name="offset.z">0.039266823760577</param>
+					<param name="offset.roll">0.426791717503514</param>
+					<param name="offset.pitch">0.053761312621899</param>
+					<param name="offset.yaw">0.007945172350260</param>
 
 				</Component>
 

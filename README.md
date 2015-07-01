@@ -44,6 +44,7 @@ Task for calibration of our multi-camera setup:
 
    * __LeftWideSetupCalibrationCirclesGrid__ - Task for calibration of a dual-camera  setup (i.e. left and wide cameras) with the use of circles grid pattern.
 
+   * __RGBXYZWideSequenceDepthTransform_test__ - Task for testing the transformation of depth (acquired in the left camera frame, transformet to wide, and finally to lazy suzan reference frame).
 
 Additional tasks for displaying images - kinect RGB-D images:
 

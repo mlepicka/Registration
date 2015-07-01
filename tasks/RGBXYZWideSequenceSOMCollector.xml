@@ -27,7 +27,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                                        <param name="auto_trigger">0</param>
+                                        <param name="auto_trigger">1</param>
 				</Component>
 
 				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
@@ -92,12 +92,21 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 				<Component name="Left2WideHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="20" bump="0">
 <!-- besl & mckay matlab (w*l^(-1))  wide*left^-1 -->
-					<param name="offset.x"> 0.045398668455971</param>
+<!-- 2015-05-21	-->
+<!--					<param name="offset.x"> 0.045398668455971</param>
 					<param name="offset.y"> -0.144593943002057</param>
 					<param name="offset.z"> 0.038911135314459</param>
 					<param name="offset.roll"> 0.314160724927050</param>
 					<param name="offset.pitch"> 0.115930661008144</param>
 					<param name="offset.yaw"> -3.100616598583211</param>-->
+
+<!-- 2015-06-11 estimateRigidTransform(wide_camera_points',left_camera_points') -->
+					<param name="offset.x">-0.047964263754209</param>
+					<param name="offset.y">0.132059601543967</param>
+					<param name="offset.z">0.039266823760577</param>
+					<param name="offset.roll">0.426791717503514</param>
+					<param name="offset.pitch">0.053761312621899</param>
+					<param name="offset.yaw">0.007945172350260</param>
 
 				</Component>
 
@@ -115,12 +124,12 @@
 				</Component><!---->
 
 				<Component name="BoardExtractor" type="ModelViewAcquisition:CubicMaskExtractor" priority="30" bump="0">
-					<param name="BlueAxis(X).X_Max">0.09</param>
-					<param name="BlueAxis(X).X_Min">-0.09</param>
-					<param name="GreenAxis(Y).Y_Max">0.09</param>
-					<param name="GreenAxis(Y).Y_Min">-0.09</param>
-					<param name="RedAxis(Z).Z_Max">0.09</param>
-					<param name="RedAxis(Z).Z_Min">0.015</param>
+					<param name="BlueAxis(X).X_Max">0.1</param>
+					<param name="BlueAxis(X).X_Min">-0.1</param>
+					<param name="GreenAxis(Y).Y_Max">0.1</param>
+					<param name="GreenAxis(Y).Y_Min">-0.1</param>
+					<param name="RedAxis(Z).Z_Max">0.2</param>
+					<param name="RedAxis(Z).Z_Min">0.023</param>
 				</Component>
 
 
@@ -160,7 +169,7 @@
 				</Component>
 
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="84" bump="1">
-					<param name="Mode.ICP">0</param>
+					<param name="Mode.ICP">1</param>
 					<param name="ICP.UseColour">1</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
@@ -180,7 +189,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-                                        <param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_views_no_icp/</param>
+                                        <param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_views_icp_c/</param>
 					<param name="base_name">view</param>
 					<param name="binary">1</param>
 				</Component>
