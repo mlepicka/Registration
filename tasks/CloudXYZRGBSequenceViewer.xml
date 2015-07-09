@@ -26,12 +26,15 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="NextImageTrigger" type="CvBasic:Trigger" priority="1" bump="0">
-					<param name="auto_trigger">1</param>						
+					<param name="auto_trigger">0</param>						
 				</Component>
 
 				<Component name="SequenceCloudXYZRGB" type="PCL:PCDSequence" priority="11" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/cukier_models/full_icp_c/</param>
+					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-05-21/!models/lipton_lum/</param>
 					<param name="sequence.pattern">.*.pcd</param>
+					<param name="cloud.xyz">0</param>
+					<param name="cloud.xyzrgb">1</param>
+					<param name="cloud.xyzsift">0</param>
 					<param name="mode.loop">0</param>
 					<param name="mode.auto_next_cloud">0</param>						
 					<param name="mode.auto_publish_cloud">1</param>						

@@ -77,14 +77,17 @@ void CorrespondenceViewer::onCSShowClick(const bool new_show_cs_){
 
     if(new_show_cs_) {
 	if (new_show_cs_) {
-//#if PCL_VERSION_COMPARE(>=,1,7,1)
-		viewer->addCoordinateSystem ();
+//#if PCL_VERSION_COMPARE(==,1,7,1)
+//		viewer->addCoordinateSystem ();
+		viewer->addCoordinateSystem (1.0,"reference", 0 );
 //#endif
 	// TODO: Currently only 1.7.1 is available in the 012/031 laboratories.
 	// TODO: Fix for other versions of PCL.
 	} else {
 //#if PCL_VERSION_COMPARE(>=,1,7,1)
-		viewer->removeCoordinateSystem ();
+//		viewer->removeCoordinateSystem ();
+		viewer->removeCoordinateSystem ("reference", 0 );
+		viewer->addCoordinateSystem (0.0,"reference", 0 );
 //#endif
 	// TODO: Currently only 1.7.1 is available in the 012/031 laboratories.
 	// TODO: Fix for other versions of PCL.
