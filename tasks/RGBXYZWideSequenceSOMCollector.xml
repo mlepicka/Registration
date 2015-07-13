@@ -39,7 +39,7 @@
 
 				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
                                         <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
-					<param name="sequence.pattern">.*_xyz.yml</param>
+					<param name="sequence.pattern">.*_xyz.yml.gz</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
@@ -110,10 +110,10 @@
 
 				</Component>
 
-				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
+				<Component name="Left2WideTransformation" type="Depth:DepthTransform" priority="21" bump="0">
 				</Component>
 
-				<Component name="Wide2BoardTransformation" type="CvStereo:DepthTransform" priority="23" bump="0">
+				<Component name="Wide2BoardTransformation" type="Depth:DepthTransform" priority="23" bump="0">
                                         <param name="inverse">1</param>
 				</Component>
 

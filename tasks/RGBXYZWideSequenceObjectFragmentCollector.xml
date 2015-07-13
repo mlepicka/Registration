@@ -100,10 +100,10 @@
 
 				</Component>
 
-				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
+				<Component name="Left2WideTransformation" type="Depth:DepthTransform" priority="21" bump="0">
 				</Component>
 
-				<Component name="Wide2BoardTransformation" type="CvStereo:DepthTransform" priority="23" bump="0">
+				<Component name="Wide2BoardTransformation" type="Depth:DepthTransform" priority="23" bump="0">
                                         <param name="inverse">1</param>
 				</Component>
 

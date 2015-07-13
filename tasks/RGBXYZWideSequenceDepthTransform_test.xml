@@ -30,22 +30,22 @@
                                         <param name="auto_trigger">0</param>
 				</Component>
 
-				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
+				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="-1">
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/kakao_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
-				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/stereo_rgbxyz/</param>
+				<Component name="XYZSequence" type="CvBasic:Sequence" priority="3" bump="-1">
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/kakao_1/stereo_rgbxyz/</param>
 					<param name="sequence.pattern">.*_xyz.yml</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
 				</Component>
 
-				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="0">
-                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/vega_1/wide/</param>
+				<Component name="WideRGBSequence" type="CvBasic:Sequence" priority="4" bump="-1">
+                                        <param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/kakao_1/wide/</param>
 										<param name="sequence.pattern">.*_wide\.png</param>
                                         <param name="mode.loop">0</param>
                                         <param name="mode.auto_next_image">0</param>
@@ -109,13 +109,13 @@
 
 				</Component>
 
-				<Component name="Left2WideTransformation" type="CvStereo:DepthTransform" priority="21" bump="0">
+				<Component name="Left2WideTransformation" type="Depth:DepthTransform" priority="21" bump="0">
 				</Component>
 
 				<Component name="tmpWide2BoardeHMProvider" type="CvCoreTypes:HomogenousMatrixProvider" priority="22" bump="0">
 				</Component>
 
-				<Component name="Wide2BoardTransformation" type="CvStereo:DepthTransform" priority="23" bump="0">
+				<Component name="Wide2BoardTransformation" type="Depth:DepthTransform" priority="23" bump="0">
                                         <param name="inverse">1</param>
 				</Component>
 
@@ -135,6 +135,11 @@
 				<Component name="RGBXYZM2PCConverter" type="PCL:DepthConverter" priority="91" bump="0">
 				</Component>
 
+				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
+					<param name="count">3</param>
+					<param name="title">RGB,XYZ,Wide</param>
+				</Component>
+
 			</Executor>
 		</Subtask>
 		
@@ -144,12 +149,6 @@
 					<param name="title">Model point cloud</param>
                                         <param name="coordinate_system">1</param>
 				</Component>
-
-				<Component name="Window" type="CvBasic:CvWindow" priority="101" bump="0">
-					<param name="count">3</param>
-					<param name="title">RGB,XYZ,Wide</param>
-				</Component>
-
 
 			</Executor>
 		</Subtask>	
@@ -173,7 +172,7 @@
 		</Source>
 
 		<Source name="XYZSequence.out_img">
-			<sink>Left2WideTransformation.in_image_xyz</sink>
+			<sink>Left2WideTransformation.in_depth_xyz</sink>
 		</Source>	
 	
 		<Source name="RGBSequence.out_img">
@@ -226,8 +225,8 @@
 			<sink>Left2WideTransformation.in_homogMatrix</sink>
 		</Source>
 
-		<Source name="Left2WideTransformation.out_image_xyz">
-			<sink>Wide2BoardTransformation.in_image_xyz</sink>
+		<Source name="Left2WideTransformation.out_depth_xyz">
+			<sink>Wide2BoardTransformation.in_depth_xyz</sink>
 		</Source>
 
 
@@ -235,7 +234,7 @@
 			<sink>Wide2BoardTransformation.in_homogMatrix</sink>
 		</Source>-->
 
-		<Source name="Wide2BoardTransformation.out_image_xyz">
+		<Source name="Wide2BoardTransformation.out_depth_xyz">
 			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink>
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
 		</Source>

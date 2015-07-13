@@ -91,7 +91,7 @@
 <!--                              Extraction of fragment of cloud constituting the object
 <!--------------------------------------------------------------------------------------------------------------------->
 
-				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="20" bump="-2">
+				<Component name="DepthTransform" type="Depth:DepthTransform" priority="20" bump="-2">
 					<param name="inverse">1</param>
 				</Component>
 

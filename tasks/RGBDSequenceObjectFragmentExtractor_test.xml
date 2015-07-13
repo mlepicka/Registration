@@ -84,7 +84,7 @@
 				<Component name="SolveLocation" type="CvBasic:CalcObjectLocation" priority="10" bump="0">
 				</Component>
 
-				<Component name="DepthTransform" type="CvStereo:DepthTransform" priority="18" bump="-2">
+				<Component name="DepthTransform" type="Depth:DepthTransform" priority="18" bump="-2">
 					<param name="inverse">1</param>
 				</Component>
 
