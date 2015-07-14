@@ -209,7 +209,7 @@
 			<Executor name="Exec2" period="0.2">
 				<Component name="Viewer" type="PCL:CloudViewer" priority="104" bump="0">
 					<param name="title">Model point cloud</param>
-                                        <param name="coordinate_system">0</param>
+                                        <param name="coordinate_system">1</param>
 				</Component>
 
 
@@ -238,7 +238,7 @@
 		</Source>
 
 		<Source name="XYZSequence.out_img">
-			<sink>Left2WideTransformation.in_image_xyz</sink>
+			<sink>Left2WideTransformation.in_depth_xyz</sink>
 		</Source>	
 	
 		<Source name="RGBSequence.out_img">
@@ -306,12 +306,12 @@
 			<sink>Left2WideTransformation.in_homogMatrix</sink>
 		</Source>
 
-		<Source name="Left2WideTransformation.out_image_xyz">
-			<sink>Wide2BoardTransformation.in_image_xyz</sink>
+		<Source name="Left2WideTransformation.out_depth_xyz">
+			<sink>Wide2BoardTransformation.in_depth_xyz</sink>
 		</Source>
 
 
-		<Source name="Wide2BoardTransformation.out_image_xyz">
+		<Source name="Wide2BoardTransformation.out_depth_xyz">
 <!--			<sink>XYZ2RainbowTransformed.in_depth_xyz</sink><!---->
 			<sink>BoardExtractor.in_image_xyz</sink>
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
