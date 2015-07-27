@@ -43,22 +43,33 @@ CorrespondenceEstimation::~CorrespondenceEstimation() {
 }
 
 void CorrespondenceEstimation::prepareInterface() {
-	// Register data streams.
+	// Register src-trg related data streams.
 	registerStream("in_src_cloud_xyzsift", &in_src_cloud_xyzsift);
 	registerStream("in_trg_cloud_xyzsift", &in_trg_cloud_xyzsift);
+	registerStream("out_correspondences", &out_src_trg_correspondences);
+
+	// Register lum related data streams.
 	registerStream("in_lum_xyzsift", &in_lum_xyzsift);
-	registerStream("out_correspondences", &out_correspondences);
 	registerStream("out_lum_xyzsift", &out_lum_xyzsift);
 
+	// Register models-scene related data streams.
+	registerStream("in_scene_cloud_xyzsift", &in_src_cloud_xyzsift);
+	registerStream("in_model_clouds_xyzsift", &in_model_clouds_xyzsift);
+	registerStream("out_models_scene_correspondences", &out_models_scene_correspondences);
 
-	// Register handlers.
+	// Register src-trg correspondence estimation handler.
 	registerHandler("estimateCorrespondencesForPairOfClouds", boost::bind(&CorrespondenceEstimation::estimateCorrespondencesForPairOfClouds, this));
 	addDependency("estimateCorrespondencesForPairOfClouds", &in_src_cloud_xyzsift);
 	addDependency("estimateCorrespondencesForPairOfClouds", &in_trg_cloud_xyzsift);
 
+	// Register lum-related correspondence estimation handler.
 	registerHandler("estimateCorrespondencesForLUMGraph", boost::bind(&CorrespondenceEstimation::estimateCorrespondencesForLUMGraph, this));
 	addDependency("estimateCorrespondencesForLUMGraph", &in_lum_xyzsift);
 
+	// Register src-trg correspondence estimation handler.
+	registerHandler("estimateCorrespondencesBeteenModelsAndScene", boost::bind(&CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene, this));
+	addDependency("estimateCorrespondencesBeteenModelsAndScene", &in_src_cloud_xyzsift);
+	addDependency("estimateCorrespondencesBeteenModelsAndScene", &in_model_clouds_xyzsift);
 
 }
 
@@ -102,12 +113,13 @@ void CorrespondenceEstimation::estimateCorrespondencesForPairOfClouds() {
 
 	// Compute and return correspondences for input clouds.
 	pcl::CorrespondencesPtr correspondences	= estimateCorrespondences(src_cloud, trg_cloud);
-	out_correspondences.write(correspondences);
+	out_src_trg_correspondences.write(correspondences);
 }
 
 
+
 void CorrespondenceEstimation::estimateCorrespondencesForLUMGraph() {
-	CLOG(LTRACE) << "estimateCorrespondencesForPairOfClouds()";
+	CLOG(LTRACE) << "estimateCorrespondencesForLUMGraph()";
 
 	// Temporary variables.
 	pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud, trg_cloud;
@@ -151,6 +163,36 @@ void CorrespondenceEstimation::estimateCorrespondencesForLUMGraph() {
 
 	// Return updated cloud.
 	out_lum_xyzsift.write(lum_xyzsift);
+}
+
+
+
+void CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene() {
+	CLOG(LTRACE) << "estimateCorrespondencesBeteenModelsAndScene()";
+
+	// Temporary variables.
+	pcl::PointCloud<PointXYZSIFT>::Ptr model_cloud;
+	pcl::CorrespondencesPtr model_correspondences;
+	std::vector<pcl::CorrespondencesPtr> all_correspondences;
+
+	// Read clouds from input ports.
+	pcl::PointCloud<PointXYZSIFT>::Ptr scene_cloud = in_src_cloud_xyzsift.read();
+	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr>  model_clouds_xyzsift = in_model_clouds_xyzsift.read();
+
+	// Iterate through models and find correspondences.
+	CLOG(LNOTICE) << "Computing correspondences between scene and models - this might take a while...";
+	for (int i = 0; i < model_clouds_xyzsift.size(); ++i) {
+		// Get i-th model cloud.
+		model_cloud = model_clouds_xyzsift[i];
+		// Compute correspondences.
+		model_correspondences = estimateCorrespondences(scene_cloud, model_cloud);
+		CLOG(LDEBUG) << "Found " << model_correspondences->size() << "between "<<i<<"-th model and scene";
+		// Add to vector.
+		all_correspondences.push_back(model_correspondences);
+	}//: for
+
+
+	out_models_scene_correspondences.write(all_correspondences);
 }
 
 

@@ -278,7 +278,7 @@ void CorrespondenceViewer::displayXYZSIFT(){
         } else {
             // Try to cast to double and divide by 255.
             trgr = boost::lexical_cast<double>(strs[0]) /255;
-            trgg = boost::lexical_cast<double>(strs[1]) /255;
+			trgg = boost::lexical_cast<double>(strs[1]) /255;
             trgb = boost::lexical_cast<double>(strs[2]) /255;
         }//: else
 
