@@ -214,9 +214,22 @@ pcl::CorrespondencesPtr CorrespondenceEstimation::estimateCorrespondences(pcl::P
 	SIFTFeatureRepresentation::Ptr point_representation(new SIFTFeatureRepresentation());
 	correst.setPointRepresentation(point_representation);
 
+
+	// Filter NaN points.
+	pcl::PointCloud<PointXYZSIFT>::Ptr filtered_src_cloud(new pcl::PointCloud<PointXYZSIFT>);
+	std::vector<int> src_indices;
+	pcl::removeNaNFromPointCloud(*src_cloud_, *filtered_src_cloud, src_indices);
+	//filtered_src_cloud->is_dense = false;
+
+	pcl::PointCloud<PointXYZSIFT>::Ptr filtered_trg_cloud(new pcl::PointCloud<PointXYZSIFT>);
+	std::vector<int> trg_indices;
+	pcl::removeNaNFromPointCloud(*trg_cloud_, *filtered_trg_cloud, trg_indices);
+	//filtered_trg_cloud->is_dense = false;
+
+
 	// Set input clouds.
-	correst.setInputSource(src_cloud_);
-	correst.setInputTarget(trg_cloud_);
+	correst.setInputSource(filtered_src_cloud);
+	correst.setInputTarget(filtered_trg_cloud);
 
 	// Find correspondences.
 	correst.determineReciprocalCorrespondences(*correspondences);
@@ -231,8 +244,8 @@ pcl::CorrespondencesPtr CorrespondenceEstimation::estimateCorrespondences(pcl::P
 			pcl::CorrespondencesPtr inliers(new pcl::Correspondences()) ;
 
 			pcl::registration::CorrespondenceRejectorSampleConsensus<PointXYZSIFT> crsac ;
-			crsac.setInputSource(src_cloud_);
-			crsac.setInputTarget(trg_cloud_);
+			crsac.setInputSource(filtered_src_cloud);
+			crsac.setInputTarget(filtered_trg_cloud);
 			crsac.setInlierThreshold(prop_RanSAC_inliers_threshold);
 			crsac.setMaximumIterations(prop_RanSAC_max_iterations);
 			crsac.setInputCorrespondences(correspondences);
@@ -254,8 +267,8 @@ pcl::CorrespondencesPtr CorrespondenceEstimation::estimateCorrespondences(pcl::P
 			pcl::CorrespondencesPtr inliers(new pcl::Correspondences()) ;
 
 			pcl::registration:: CorrespondenceRejectorDistance cr ;
-			cr.setInputSource<PointXYZSIFT>(src_cloud_);
-			cr.setInputTarget<PointXYZSIFT>(trg_cloud_);
+			cr.setInputSource<PointXYZSIFT>(filtered_src_cloud);
+			cr.setInputTarget<PointXYZSIFT>(filtered_trg_cloud);
 			cr.setMaximumDistance(prop_max_distance);
 			cr.setInputCorrespondences(correspondences);
 

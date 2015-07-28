@@ -74,17 +74,17 @@ protected:
 
 
 	/// Input data stream containing source XYZSIFT cloud.
-	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_src_cloud_xyzsift;
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_src_cloud_xyzsift;
 
 	/// Input data stream containing target XYZSIFT cloud.
-	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr> in_trg_cloud_xyzsift;
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_trg_cloud_xyzsift;
 
 	/// Output data stream containing corespondences beetwen input clouds.
 	Base::DataStreamOut<pcl::CorrespondencesPtr> out_src_trg_correspondences;
 
 
 	/// Input data stream containing vector of XYZSIFT clouds (objects/models).
-	Base::DataStreamIn <std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr> > in_model_clouds_xyzsift;
+	Base::DataStreamIn <std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr>, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_model_clouds_xyzsift;
 
 
 	/// Output data stream containing vector of corespondences beetwen models and scene clouds.
@@ -93,7 +93,7 @@ protected:
 
 
 	/// Input data stream containing the SLAM graph in which correspondences will be found.
-	Base::DataStreamIn<pcl::registration::LUM<PointXYZSIFT>::Ptr> in_lum_xyzsift;
+	Base::DataStreamIn<pcl::registration::LUM<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_lum_xyzsift;
 
 	/// Output data stream containing the SLAM graph with estimated correspondences.
 	Base::DataStreamOut<pcl::registration::LUM<PointXYZSIFT>::Ptr> out_lum_xyzsift;
