@@ -53,7 +53,7 @@ void CorrespondenceEstimation::prepareInterface() {
 	registerStream("out_lum_xyzsift", &out_lum_xyzsift);
 
 	// Register models-scene related data streams.
-	registerStream("in_scene_cloud_xyzsift", &in_src_cloud_xyzsift);
+	registerStream("in_scene_cloud_xyzsift", &in_trg_cloud_xyzsift);
 	registerStream("in_model_clouds_xyzsift", &in_model_clouds_xyzsift);
 	registerStream("out_models_scene_correspondences", &out_models_scene_correspondences);
 
@@ -68,7 +68,7 @@ void CorrespondenceEstimation::prepareInterface() {
 
 	// Register src-trg correspondence estimation handler.
 	registerHandler("estimateCorrespondencesBeteenModelsAndScene", boost::bind(&CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene, this));
-	addDependency("estimateCorrespondencesBeteenModelsAndScene", &in_src_cloud_xyzsift);
+	addDependency("estimateCorrespondencesBeteenModelsAndScene", &in_trg_cloud_xyzsift);
 	addDependency("estimateCorrespondencesBeteenModelsAndScene", &in_model_clouds_xyzsift);
 
 }
@@ -140,18 +140,18 @@ void CorrespondenceEstimation::estimateCorrespondencesForLUMGraph() {
 	for (int i=0; i < lum_xyzsift->getNumVertices(); i++){
 
 		// Get i-th cloud and transform it.
-		pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_trans (new pcl::PointCloud<PointXYZSIFT>);
-		src_cloud = lum_xyzsift->getPointCloud(i);
-		Eigen::Affine3f src_tf  = lum_xyzsift->getTransformation(i);
-		pcl::transformPointCloud(*src_cloud, *src_cloud_trans, src_tf);
+		pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_trans (new pcl::PointCloud<PointXYZSIFT>);
+		trg_cloud = lum_xyzsift->getPointCloud(i);
+		Eigen::Affine3f trg_tf  = lum_xyzsift->getTransformation(i);
+		pcl::transformPointCloud(*trg_cloud, *trg_cloud_trans, trg_tf);
 
 		for (int j=i+1; j < lum_xyzsift->getNumVertices(); j++){
 
 			// Get j-th cloud and transform it.
-			pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_trans (new pcl::PointCloud<PointXYZSIFT>);
-			trg_cloud = lum_xyzsift->getPointCloud(j);
-			Eigen::Affine3f trg_tf  = lum_xyzsift->getTransformation(j);
-			pcl::transformPointCloud(*trg_cloud, *trg_cloud_trans, trg_tf);
+			pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_trans (new pcl::PointCloud<PointXYZSIFT>);
+			src_cloud = lum_xyzsift->getPointCloud(j);
+			Eigen::Affine3f src_tf  = lum_xyzsift->getTransformation(j);
+			pcl::transformPointCloud(*src_cloud, *src_cloud_trans, src_tf);
 
 			// Compute correspondences.
 			CLOG(LNOTICE) << "correspondences between: ("<<i<<","<<j<<")";
@@ -176,7 +176,7 @@ void CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene() {
 	std::vector<pcl::CorrespondencesPtr> all_correspondences;
 
 	// Read clouds from input ports.
-	pcl::PointCloud<PointXYZSIFT>::Ptr scene_cloud = in_src_cloud_xyzsift.read();
+	pcl::PointCloud<PointXYZSIFT>::Ptr scene_cloud = in_trg_cloud_xyzsift.read();
 	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr>  model_clouds_xyzsift = in_model_clouds_xyzsift.read();
 
 	// Iterate through models and find correspondences.
@@ -184,8 +184,8 @@ void CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene() {
 	for (int i = 0; i < model_clouds_xyzsift.size(); ++i) {
 		// Get i-th model cloud.
 		model_cloud = model_clouds_xyzsift[i];
-		// Compute correspondences.
-		model_correspondences = estimateCorrespondences(scene_cloud, model_cloud);
+		// Compute !MODEL 2 SCENE! correspondences.
+		model_correspondences = estimateCorrespondences(model_cloud, scene_cloud);
 		CLOG(LDEBUG) << "Found " << model_correspondences->size() << "between "<<i<<"-th model and scene";
 		// Add to vector.
 		all_correspondences.push_back(model_correspondences);
