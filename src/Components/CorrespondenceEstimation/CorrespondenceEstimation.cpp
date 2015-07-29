@@ -136,7 +136,7 @@ void CorrespondenceEstimation::estimateCorrespondencesForLUMGraph() {
 
 
 	// Iterate through graph and compute correspondences between all pairs of clouds.
-	CLOG(LNOTICE) << "Computing correspondences between all pairs of clouds - this might take a while...";
+	CLOG(LINFO) << "Computing correspondences between all pairs of clouds - this might take a while...";
 	for (int i=0; i < lum_xyzsift->getNumVertices(); i++){
 
 		// Get i-th cloud and transform it.
@@ -180,7 +180,7 @@ void CorrespondenceEstimation::estimateCorrespondencesBeteenModelsAndScene() {
 	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr>  model_clouds_xyzsift = in_model_clouds_xyzsift.read();
 
 	// Iterate through models and find correspondences.
-	CLOG(LNOTICE) << "Computing correspondences between scene and models - this might take a while...";
+	CLOG(LINFO) << "Computing correspondences between scene and models - this might take a while...";
 	for (int i = 0; i < model_clouds_xyzsift.size(); ++i) {
 		// Get i-th model cloud.
 		model_cloud = model_clouds_xyzsift[i];
