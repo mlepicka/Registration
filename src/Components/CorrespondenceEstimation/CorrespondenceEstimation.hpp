@@ -18,7 +18,9 @@
 #include <Types/HomogMatrix.hpp>
 #include <Types/PointXYZSIFT.hpp>
 #include <Types/SIFTFeatureRepresentation.hpp>
-
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/correspondence_rejection_distance.h>
 // GraphSLAM structure.
 #include <pcl/registration/lum.h>
 
@@ -82,7 +84,7 @@ protected:
 	/// Output data stream containing corespondences beetwen input clouds.
 	Base::DataStreamOut<pcl::CorrespondencesPtr> out_src_trg_correspondences;
 
-
+	Base::DataStreamOut<pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr > out_corest;
 	/// Input data stream containing vector of XYZSIFT clouds (objects/models).
 	Base::DataStreamIn <std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr>, Base::DataStreamBuffer::Newest, Base::Synchronization::Mutex> in_model_clouds_xyzsift;
 

@@ -26,6 +26,7 @@
 // ICP with colour
 #include "Types/CorrespondenceEstimationColor.hpp"
 
+#include <pcl/registration/correspondence_estimation.h>
 
 
 namespace Processors {
@@ -61,7 +62,6 @@ public:
   }
 };
 
-
 /*pcl::PointCloud<pcl::Normal>::Ptr getNormals( pcl::PointCloud<pcl::PointXYZRGB>::Ptr incloud ) {
 
         pcl::PointCloud<pcl::Normal>::Ptr normalsPtr = pcl::PointCloud<pcl::Normal>::Ptr (new pcl::PointCloud<pcl::Normal>);
@@ -82,7 +82,8 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 	prop_ICP_TransformationEpsilon("ICP.TransformationEpsilon",1e-8),
 	prop_ICP_EuclideanFitnessEpsilon("ICP.EuclideanFitnessEpsilon",1),
 	prop_ICP_colour("ICP.UseColour",true),
-	prop_ICP_normals("ICP.UseNormals",true)
+	prop_ICP_normals("ICP.UseNormals",true),
+	prop_ICP_SIFT("ICP.UseSIFT",true)
 {
 	// Register ICP properties.
 	registerProperty(prop_ICP);
@@ -94,6 +95,7 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 	registerProperty(prop_ICP_EuclideanFitnessEpsilon);
 	registerProperty(prop_ICP_colour);
 	registerProperty(prop_ICP_normals);
+	registerProperty(prop_ICP_SIFT);
 }
 
 PairwiseRegistration::~PairwiseRegistration() {
@@ -106,17 +108,21 @@ void PairwiseRegistration::prepareInterface() {
     registerStream("in_save_src_cloud_trigger", &in_save_src_cloud_trigger);
     registerStream("out_transformation_xyz", &out_transformation_xyz);
 	registerStream("out_transformation_xyzrgb", &out_transformation_xyzrgb);
-
-
+	registerStream("in_correspondences", &in_src_trg_correspondences);
+	registerStream("in_src_cloud_xyzsift", &in_src_cloud_xyzsift);
+	registerStream("in_trg_cloud_xyzsift", &in_trg_cloud_xyzsift);
+	registerHandler("pairwise_registration_xyzsift", boost::bind(&PairwiseRegistration::pairwise_registration_xyzsift, this));
+	addDependency("pairwise_registration_xyzsift", &in_trg_cloud_xyzsift);
 	// Register handlers
 	registerHandler("pairwise_registration_xyzrgb", boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb, this));
 	addDependency("pairwise_registration_xyzrgb", &in_trg_cloud_xyzrgb);
+
 }
 
 bool PairwiseRegistration::onInit() {
 	// Init prev cloud.
 	src_cloud_xyzrgb = pcl::PointCloud<pcl::PointXYZRGB>::Ptr (new pcl::PointCloud<pcl::PointXYZRGB>);
-
+	src_cloud_xyzsift = pcl::PointCloud<PointXYZSIFT>::Ptr (new pcl::PointCloud<PointXYZSIFT>);
 	return true;
 }
 
@@ -130,6 +136,48 @@ bool PairwiseRegistration::onStop() {
 
 bool PairwiseRegistration::onStart() {
 	return true;
+}
+
+Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_,pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr  correspondences){
+	CLOG(LTRACE) << "pairwise_icp_based_registration_xyzsift_";
+	// Temporary variable storing the resulting transformation.
+	Types::HomogMatrix result;
+
+	if(prop_ICP_SIFT){
+		//pcl::CorrespondencesPtr correspondences	= estimateCorrespondences(src_cloud_xyzsift_, trg_cloud_xyzsift_);
+		pcl::IterativeClosestPoint<PointXYZSIFT, PointXYZSIFT> icp;
+
+				// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+				icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
+				// Set the maximum number of iterations (criterion 1)
+				icp.setMaximumIterations (prop_ICP_MaximumIterations);
+				// Set the transformation epsilon (criterion 2)
+				icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
+				// Set the euclidean distance difference epsilon (criterion 3)
+				icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+
+				// Set correspondence two-step correspondence estimation using colour.
+			//	pcl::registration::CorrespondenceEstimation<PointXYZSIFT,PointXYZSIFT,float>::Ptr ceptr(&correspondences);
+				icp.setCorrespondenceEstimation(correspondences);
+
+				icp.setInputSource (src_cloud_xyzsift_);
+				icp.setInputTarget (trg_cloud_xyzsift_);
+
+				pcl::PointCloud<PointXYZSIFT>::Ptr aligned_trg_cloud_xyzsift_ (new pcl::PointCloud<PointXYZSIFT>());
+
+				// Align clouds.
+				icp.align(*aligned_trg_cloud_xyzsift_);
+				CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
+
+				// Get the transformation from target to source.
+				Types::HomogMatrix icp_trans = icp.getFinalTransformation();
+				CLOG(LINFO) << "icp_trans:\n" << icp_trans;
+
+				// Set resulting transformation.
+				result.matrix() = icp_trans.matrix().inverse();
+	}
+	return result;
+
 }
 
 
@@ -393,6 +441,40 @@ void  PairwiseRegistration::pairwise_registration_xyzrgb(){
 	out_transformation_xyzrgb.write(result);
 }
 
+void  PairwiseRegistration::pairwise_registration_xyzsift(){
+	CLOG(LTRACE) << "pairwise_registration_xyzsift";
+	// Temporary variable storing the resulting transformation.
+	Types::HomogMatrix result;
+	// Read current cloud from port.
+	pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift = in_trg_cloud_xyzsift.read();
+	pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr correspondences = in_src_trg_correspondences.read();
+	src_cloud_xyzsift = in_src_cloud_xyzsift.read();
+    // Check whether source cloud is received and is required to save.
+    if ((!in_src_cloud_xyzsift.empty()) && (!in_save_src_cloud_trigger.empty())) {
+		CLOG(LINFO) << "Storing source cloud";
+		src_cloud_xyzsift = in_src_cloud_xyzsift.read();
+        in_save_src_cloud_trigger.read();
+		// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
+	}//: if
+
+	// Debug.
+	CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzsift->size();
+	if (!src_cloud_xyzsift->empty ())
+			CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzsift->size();
+
+	/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
+	if (src_cloud_xyzsift->empty () || !prop_ICP) {
+		// Return identity matrix.
+		CLOG(LINFO) << "ICP refinement not used";
+		result.setIdentity();
+	} else {
+		// Run ICP.
+		result = pairwise_icp_based_registration_xyzsift(src_cloud_xyzsift, trg_cloud_xyzsift, correspondences);
+	}//: else - !src_cloud_xyzrgb->empty ()
+
+	// Return the transformation.
+	out_transformation_xyzrgb.write(result);
+}
 
 
 

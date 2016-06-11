@@ -96,7 +96,7 @@ protected:
 	// Output stream: previous  XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_previous_cloud_xyzrgb;
 
-
+	Base::DataStreamOut<pcl::PointCloud<PointXYZSIFT>::Ptr> out_previous_cloud_xyzsift;
 	///  Property - store first cloud.
 	Base::Property<bool> prop_store_first_cloud;
 

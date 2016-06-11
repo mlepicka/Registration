@@ -12,12 +12,16 @@
 #include "DataStream.hpp"
 #include "Property.hpp"
 #include "EventHandler2.hpp"
-
+#include "Types/PointXYZSIFT.hpp"
+#include "Types/SIFTFeatureRepresentation.hpp"
 #include "Types/HomogMatrix.hpp"
-
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/correspondence_rejection_distance.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
-
+#include <pcl/registration/correspondence_estimation.h>
+#include <pcl/registration/correspondence_rejection_sample_consensus.h>
+#include <pcl/registration/correspondence_rejection_distance.h>
 namespace Processors {
 namespace PairwiseRegistration {
 
@@ -71,6 +75,12 @@ protected:
 
 	/// Input data stream containing XYZ cloud.
 //	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZ>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyz;
+	/// Input data stream containing source (previous) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest> in_src_cloud_xyzsift;
+
+	/// Input data stream containing target (next) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest> in_trg_cloud_xyzsift;
+
 
 	/// Input data stream containing source (previous) XYZRGB cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_src_cloud_xyzrgb;
@@ -80,16 +90,17 @@ protected:
 
 	/// Resulting transformation between XYZ clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyz;
-
+	Base::DataStreamIn<pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest > in_src_trg_correspondences;
 	/// Resulting transformation between XYZRGB clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyzrgb;
 
 	/// Source (previous) cloud, to which the component will try to align.
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb;
+	pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift;
 
     /// Trigger - used for returning previous cloud.
     Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_save_src_cloud_trigger;
-
+    //pcl::CorrespondencesPtr estimateCorrespondences(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_);
 
 	/****************** ICP PROPERTIES ***********************/
 
@@ -114,15 +125,19 @@ protected:
 	///  Property - use normals in ICP.
 	Base::Property<bool> prop_ICP_normals;
 
+	///  Property - use SIFT in ICP.
+	Base::Property<bool> prop_ICP_SIFT;
+
 
 	/// Align XYZ clouds - handler.
 //	void pairwise_registration_xyz();
 
 	/// Aligns XYZRGB clouds - handler.
 	void pairwise_registration_xyzrgb();
-
+	void pairwise_registration_xyzsift();
 	// Performs ICP-based pairwise registration.
 	Types::HomogMatrix pairwise_icp_based_registration_xyzrgb(pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb_);
+	Types::HomogMatrix pairwise_icp_based_registration_xyzsift(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_,pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr  correspondences);
 };
 
 } //: namespace PairwiseRegistration

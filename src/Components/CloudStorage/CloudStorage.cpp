@@ -52,6 +52,7 @@ void CloudStorage::prepareInterface() {
 	registerStream("out_cloud_xyzrgb", &out_cloud_xyzrgb);
 	registerStream("out_cloud_xyzsift", &out_cloud_xyzsift);
 	registerStream("out_previous_cloud_xyzrgb", &out_previous_cloud_xyzrgb);
+	registerStream("out_previous_cloud_xyzsift", &out_previous_cloud_xyzsift);
 
 	// Register button-triggered handlers.
 	registerHandler("Add cloud", boost::bind(&CloudStorage::onAddCloudButtonPressed, this));
@@ -360,11 +361,15 @@ void  CloudStorage::return_previous_cloud(){
 		// Get previous (n-1) cloud.
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
+
+		pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp_sift (new pcl::PointCloud<PointXYZSIFT>);
+		pcl::PointCloud<PointXYZSIFT>::Ptr tmp_sift = (clouds_xyzsift[i]);
 		// Transform it.
-		pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
+		pcl::transformPointCloud(*tmp_sift, *trans_tmp_sift, transformations[i]);
 
 		// Return previous cloud.
 		out_previous_cloud_xyzrgb.write(trans_tmp);
+		out_previous_cloud_xyzsift.write(trans_tmp_sift);
 	}//: else
 }
 

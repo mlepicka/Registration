@@ -27,18 +27,18 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Trigger" type="CvBasic:Trigger" priority="1" bump="0">
-                    <param name="auto_trigger">1</param>
+                    <param name="auto_trigger">0</param>
 				</Component>
 
-				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect/</param>
+								<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
+					<param name="sequence.directory">/home/mort/Objects/auto/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
                     <param name="mode.loop">0</param>
                     <param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect/</param>
+					<param name="sequence.directory">/home/mort/Objects/auto/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
                     <param name="mode.loop">0</param>
                     <param name="mode.auto_next_image">0</param>
@@ -137,17 +137,21 @@
 				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
 				</Component>
 
-				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="42" bump="1">
+				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="43" bump="1">
 					<param name="Mode.ICP">1</param>
-					<param name="ICP.UseColour">1</param>
+					<param name="ICP.UseColour">0</param>
 					<param name="ICP.UseNormals">0</param>
+					<param name="ICP.UseSIFT">1</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
 					<param name="ICP.MaximumIterations">50</param>
 					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
 					<param name="ICP.TransformationEpsilon">1e-20</param>
 				</Component>
 
-				<Component name="CloudStorage" type="Registration:CloudStorage" priority="43" bump="0">
+				<Component name="CorrespondenceEstimation" type="Registration:CorrespondenceEstimation" priority="42" bump="0">
+				</Component>
+
+				<Component name="CloudStorage" type="Registration:CloudStorage" priority="44" bump="0">
                     <param name="CloudsLimit">1</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
@@ -158,7 +162,7 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="Writer" type="PCL:PCDWriter" priority="100" bump="0">
-					<param name="directory">%[TASK_LOCATION]%/../data/2015-06-11/auto_1/kinect_views_icp_c/</param>
+					<param name="directory">/home/mort/icp_view/</param>
 					<param name="base_name">view</param>
 					<param name="binary">1</param>
 				</Component>
@@ -199,7 +203,7 @@
 
 		<Source name="DepthSequence.out_img">
  			<sink>D2XYZConverter.in_depth</sink>
-		</Source>	
+		</Source>
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
@@ -282,6 +286,7 @@
 
 		<Source name="SIFT2SPCConverter.out_cloud_xyzsift">
 			<sink>CloudTransformer.in_cloud_xyzsift</sink>
+			<sink>CorrespondenceEstimation.in_src_cloud_xyzsift</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -299,6 +304,8 @@
 
 		<Source name= "CloudTransformer.out_cloud_xyzsift">
 			<sink>CloudStorage.in_cloud_xyzsift</sink>
+			<sink>CorrespondenceEstimation.in_trg_cloud_xyzsift</sink>
+			
 		</Source>
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
@@ -308,16 +315,24 @@
 		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
 			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
-
+		<Source name="CorrespondenceEstimation.out_corest">
+			<sink>PairwiseRegistration.in_correspondences</sink>
+		</Source>
+		<Source name="CloudStorage.out_previous_cloud_xyzsift">
+			<sink>CorrespondenceEstimation.in_src_cloud_xyzsift</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzsift</sink>
+		</Source>
 		<Source name="CloudStorage.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>
 			<sink>Writer.in_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name="CloudStorage.out_cloud_xyzsift">
+<sink>PairwiseRegistration.in_trg_cloud_xyzsift</sink>
 			<sink>Viewer.in_cloud_xyzsift</sink>
 			<sink>Writer.in_cloud_xyzsift</sink>
-		</Source>-->
+		</Source>
+
 
 	</DataStreams>
 </Task>

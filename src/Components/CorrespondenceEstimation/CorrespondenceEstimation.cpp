@@ -47,6 +47,7 @@ void CorrespondenceEstimation::prepareInterface() {
 	registerStream("in_src_cloud_xyzsift", &in_src_cloud_xyzsift);
 	registerStream("in_trg_cloud_xyzsift", &in_trg_cloud_xyzsift);
 	registerStream("out_correspondences", &out_src_trg_correspondences);
+	registerStream("out_corest", &out_corest);
 
 	// Register lum related data streams.
 	registerStream("in_lum_xyzsift", &in_lum_xyzsift);
@@ -209,10 +210,10 @@ pcl::CorrespondencesPtr CorrespondenceEstimation::estimateCorrespondences(pcl::P
 	}//: if passthrough
 
 	// Create object responsible for correspondence estimation.
-	pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT> correst;
+	pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr correst(new pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>());
 	// Set feature representation.
 	SIFTFeatureRepresentation::Ptr point_representation(new SIFTFeatureRepresentation());
-	correst.setPointRepresentation(point_representation);
+	correst->setPointRepresentation(point_representation);
 
 
 	// Filter NaN points.
@@ -228,13 +229,14 @@ pcl::CorrespondencesPtr CorrespondenceEstimation::estimateCorrespondences(pcl::P
 
 
 	// Set input clouds.
-	correst.setInputSource(filtered_src_cloud);
-	correst.setInputTarget(filtered_trg_cloud);
+	correst->setInputSource(filtered_src_cloud);
+	correst->setInputTarget(filtered_trg_cloud);
+
 
 	// Find correspondences.
-	correst.determineReciprocalCorrespondences(*correspondences);
+	correst->determineReciprocalCorrespondences(*correspondences);
 	CLOG(LINFO) << "Found correspondences: " << correspondences->size();
-
+	out_corest.write(correst);
 	// Correspondence rejection.
 	if (prop_reject_correspondences) {
 		CLOG(LDEBUG) << "Correspondence rejection";
