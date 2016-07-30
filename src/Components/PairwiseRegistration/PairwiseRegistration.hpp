@@ -131,6 +131,7 @@ protected:
 
 	/// Align XYZ clouds - handler.
 //	void pairwise_registration_xyz();
+	Types::HomogMatrix result;
 
 	/// Aligns XYZRGB clouds - handler.
 	void pairwise_registration_xyzrgb();

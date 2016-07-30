@@ -342,19 +342,26 @@ void  CloudStorage::return_previous_cloud(){
 	if (prop_return_previous_merged_cloud) {
 		// Return merged cloud.
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_previous (new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::PointCloud<PointXYZSIFT>::Ptr merged_previous_sift (new pcl::PointCloud<PointXYZSIFT>);
 		// Merge all clouds EXCEPT the last (i.e. pairwise registered) one!
 		for (int i = 0 ; i <= transformations.size()-1; i++) {
 			// Get cloud.
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = (clouds_xyzrgb[i]);
+
+			pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp_sift (new pcl::PointCloud<PointXYZSIFT>);
+			pcl::PointCloud<PointXYZSIFT>::Ptr tmp_sift = (clouds_xyzsift[i]);
 			// Transform it.
 			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
+			pcl::transformPointCloud(*tmp_sift, *trans_tmp_sift, transformations[i]);
 			// Add to merged cloud.
 			*merged_previous += *trans_tmp;
+			*merged_previous_sift += *trans_tmp_sift;
 		}
 		// Return merged previous cloud.
 		CLOG(LINFO) << "merged_previous->size(): "<< merged_previous->size();
 		out_previous_cloud_xyzrgb.write(merged_previous);
+		out_previous_cloud_xyzsift.write(merged_previous_sift);
 	} else {
 		// Return previous cloud.
 		int i = transformations.size()-1;

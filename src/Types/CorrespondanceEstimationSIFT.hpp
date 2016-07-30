@@ -79,62 +79,50 @@ public:
 
 		if (!initCompute())
 			return;
-
 		double max_dist_sqr = max_distance * max_distance;
-
 		correspondences.resize(indices_->size());
-
 		std::vector<int> index(1);
 		std::vector<float> distance(1);
-		std::vector<float> distanceRGB(1);
-
-		//narazie na pale
-		float minRGB = 2000;
-		int minIndex = -2;
-		float distance_ = 1000;
-
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
+		SIFTFeatureRepresentation::Ptr point_representation(
+				new SIFTFeatureRepresentation());
+
+		pcl::KdTreeFLANN<PointXYZSIFT> match_search;
+		match_search.setPointRepresentation(point_representation);
+		match_search.setInputCloud (target_);
+
+		//tree_->setPointRepresentation(point_representation);
 
 		// Check if the template types are the same. If true, avoid a copy.
 		// Both point types MUST be registered using the POINT_CLOUD_REGISTER_POINT_STRUCT macro!
 		if (isSamePointType<PointSource, PointTarget>()) {
 			// Iterate over the input set of source indices
-			for (std::vector<int>::const_iterator idx = indices_->begin(); idx != indices_->end(); ++idx) {
+			for (std::vector<int>::const_iterator idx = indices_->begin();
+					idx != indices_->end(); ++idx) {
 
-			//	int r = input_->points[*idx].r;
-			//	int g = input_->points[*idx].g;
-			//	int b = input_->points[*idx].b;
-
-				tree_->nearestKSearch (input_->points[*idx], 1, index, distance);
-				/*float mindist = distance[24];
-				float minrgbdist = 999999;
-				int minind = 24;
-				for (int i = 0; i < index.size(); i++) {
-
-					int rr = target_->points[index[i]].r;
-					int gg = target_->points[index[i]].g;
-					int bb = target_->points[index[i]].b;
-
-					float rd = r - rr;
-					float gd = g - gg;
-					float bd = b - bb;
-
-					float distancergb = sqrt(rd*rd + gd*gd + bd*bd);
-
-					if (distancergb < minrgbdist) {
-						minrgbdist = distancergb;
-						minind = i;
-						mindist = distance[i];
-					}
-				}
-				if (mindist > max_dist_sqr)
+				std::vector<int> neigh_indices(1);
+				std::vector<float> neigh_sqr_dists(1);
+				if (!pcl_isfinite (input_->points[*idx].descriptor[0])) //skipping NaNs
+				{
 					continue;
-*/
+				}
+
+				int found_neighs = match_search.nearestKSearch(input_->points[*idx],
+						1, neigh_indices, neigh_sqr_dists);
+
+//				if (neigh_sqr_dists[0] > max_dist_sqr)
+//					continue;
+
+//				if (found_neighs == 1) // && neigh_sqr_dists[0] < max_distance) //  add match only if the squared descriptor distance is less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
+//				if(neigh_sqr_dists[0] < 0.25f)
+//				{
 				corr.index_query = *idx;
-				corr.index_match = index[0];
-				corr.distance = distance[0];
+				corr.index_match = neigh_indices[0];
+				corr.distance = neigh_sqr_dists[0];
 				correspondences[nr_valid_correspondences++] = corr;
+//				}
+
 			}
 		} else {
 			PointTarget pt;
@@ -155,6 +143,7 @@ public:
 			}
 		}
 		correspondences.resize(nr_valid_correspondences);
+
 		deinitCompute();
 	}
 
@@ -186,7 +175,10 @@ public:
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
 		int target_idx = 0;
-
+		SIFTFeatureRepresentation::Ptr point_representation(
+						new SIFTFeatureRepresentation());
+		tree_reciprocal_->setPointRepresentation(point_representation);
+		tree_->setPointRepresentation(point_representation);
 		// Check if the template types are the same. If true, avoid a copy.
 		// Both point types MUST be registered using the POINT_CLOUD_REGISTER_POINT_STRUCT macro!
 		if (isSamePointType<PointSource, PointTarget>()) {
@@ -195,15 +187,14 @@ public:
 					idx != indices_->end(); ++idx) {
 				tree_->nearestKSearch(input_->points[*idx], 1, index, distance);
 
-				if (distance[0] > max_dist_sqr)
-					continue;
+//				if (distance[0] > max_dist_sqr)
+//					continue;
 
 				target_idx = index[0];
 
 				tree_reciprocal_->nearestKSearch(target_->points[target_idx], 1,
 						index_reciprocal, distance_reciprocal);
-				if (distance_reciprocal[0] > max_dist_sqr
-						|| *idx != index_reciprocal[0])
+				if ( *idx != index_reciprocal[0])
 					continue;
 
 				corr.index_query = *idx;
