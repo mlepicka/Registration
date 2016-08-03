@@ -108,8 +108,7 @@ void PairwiseRegistration::prepareInterface() {
 			boost::bind(&PairwiseRegistration::pairwise_registration_xyzsift,
 					this));
 	addDependency("pairwise_registration_xyzsift", &in_trg_cloud_xyzsift);
-	addDependency("pairwise_registration_xyzsift", &in_src_trg_correspondences);
-	//addDependency("pairwise_registration_xyzsift", &in_src_cloud_xyzsift);
+	addDependency("pairwise_registration_xyzsift", &in_src_cloud_xyzsift);
 	// Register handlers
 	registerHandler("pairwise_registration_xyzrgb",
 			boost::bind(&PairwiseRegistration::pairwise_registration_xyzrgb,
@@ -119,6 +118,7 @@ void PairwiseRegistration::prepareInterface() {
 }
 
 bool PairwiseRegistration::onInit() {
+	counter = 0;
 	// Init prev cloud.
 	src_cloud_xyzrgb = pcl::PointCloud<pcl::PointXYZRGB>::Ptr(
 			new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -141,14 +141,13 @@ bool PairwiseRegistration::onStart() {
 
 Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift(
 		pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_,
-		pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_,
-		pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr correspondences) {
+		pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_) {
 	CLOG(LTRACE)<< "pairwise_icp_based_registration_xyzsift_";
 	// Temporary variable storing the resulting transformation.
 	Types::HomogMatrix result;
 
 	if(prop_ICP_SIFT) {
-		//pcl::CorrespondencesPtr correspondences	= estimateCorrespondences(src_cloud_xyzsift_, trg_cloud_xyzsift_);
+
 		pcl::IterativeClosestPoint<PointXYZSIFT, PointXYZSIFT> icp;
 
 		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
@@ -164,29 +163,30 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift
 		pcl::registration::CorrespondenceEstimationSIFT<PointXYZSIFT, PointXYZSIFT, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationSIFT<PointXYZSIFT, PointXYZSIFT, float>);
 		icp.setCorrespondenceEstimation(ceptr);
 
-		//SIFTFeatureRepresentation::Ptr point_representation(
-		//						new SIFTFeatureRepresentation());
-		//icp.setPointRepresentation(point_representation);
-
 		icp.setInputSource (src_cloud_xyzsift_);
 		icp.setInputTarget (trg_cloud_xyzsift_);
 
 		pcl::PointCloud<PointXYZSIFT>::Ptr aligned_trg_cloud_xyzsift_ (new pcl::PointCloud<PointXYZSIFT>());
 
 		// Align clouds.
-		for(int i=0; i<10; i++){
-			icp.align(*aligned_trg_cloud_xyzsift_);
-			CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore()
-					<< " iterations: " << icp.nr_iterations_
-					<< " correspondences: " << icp.correspondences_->size();
-		}
-		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore()
-		<< " iterations: " << icp.nr_iterations_ ;
-
-		// Get the transformation from target to source.
+		icp.align(*aligned_trg_cloud_xyzsift_);
 		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
-		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
 
+		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore()
+		<< " iterations: " << icp.nr_iterations_
+		<< " correspondences: " << icp.correspondences_->size();
+
+		if(!in_save_src_cloud_trigger.empty()) {
+			std::ofstream plik5, plik6;
+			plik5.open("/home/mort/wyniki/wynikiIteracje.txt", ios::out|ios::app);
+			plik6.open("/home/mort/wyniki/wynikiIloscPunktow.txt", ios::out|ios::app);
+
+			plik5 << icp.nr_iterations_ << endl;
+			plik6 << src_cloud_xyzsift_.get()->size() << endl;
+
+			plik5.close();
+			plik6.close();
+		}
 		// Set resulting transformation.
 		result.matrix() = icp_trans.matrix().inverse();
 	}
@@ -232,7 +232,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 //		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
 		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
 
-		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
 		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
 		// Set the maximum number of iterations (criterion 1)
 		icp.setMaximumIterations (prop_ICP_MaximumIterations);
@@ -291,7 +291,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 //		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
 		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
 
-		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
 		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
 		// Set the maximum number of iterations (criterion 1)
 		icp.setMaximumIterations (2);
@@ -416,7 +416,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 
 	}		//: else ICP
 
-			// Return transformation.
+	// Return transformation.
 	return result;
 }
 
@@ -435,12 +435,12 @@ void PairwiseRegistration::pairwise_registration_xyzrgb() {
 		// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
 	}		//: if
 
-			// Debug.
+	// Debug.
 	CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzrgb->size();
 	if (!src_cloud_xyzrgb->empty ())
 	CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzrgb->size();
 
-			/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
+	/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
 	if (src_cloud_xyzrgb->empty () || !prop_ICP) {
 		// Return identity matrix.
 		CLOG(LINFO) << "ICP refinement not used";
@@ -450,7 +450,7 @@ void PairwiseRegistration::pairwise_registration_xyzrgb() {
 		result = pairwise_icp_based_registration_xyzrgb(src_cloud_xyzrgb, trg_cloud_xyzrgb);
 	}		//: else - !src_cloud_xyzrgb->empty ()
 
-			// Return the transformation.
+	// Return the transformation.
 	if(!prop_ICP_SIFT) {
 		out_transformation_xyzrgb.write(result);
 	}
@@ -465,8 +465,7 @@ void PairwiseRegistration::pairwise_registration_xyzsift() {
 	Types::HomogMatrix result;
 	// Read current cloud from port.
 	pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift = in_trg_cloud_xyzsift.read();
-	CLOG(LINFO) << "Reading correspondences!";
-	pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr correspondences = in_src_trg_correspondences.read();
+
 	CLOG(LINFO) << "Reading src_cloud!";
 	src_cloud_xyzsift = in_src_cloud_xyzsift.read();
 	// Check whether source cloud is received and is required to save.
@@ -477,22 +476,48 @@ void PairwiseRegistration::pairwise_registration_xyzsift() {
 		// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
 	}		//: if
 
-			// Debug.
+	// Debug.
 	CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzsift->size();
 	if (!src_cloud_xyzsift->empty ())
 	CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzsift->size();
 
-			/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
+	/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
 	if (src_cloud_xyzsift->empty () || !prop_ICP) {
 		// Return identity matrix.
 		CLOG(LINFO) << "ICP refinement not used";
 		result.setIdentity();
 	} else {
 		// Run ICP.
-		result = pairwise_icp_based_registration_xyzsift(src_cloud_xyzsift, trg_cloud_xyzsift, correspondences);
+		result = pairwise_icp_based_registration_xyzsift(src_cloud_xyzsift, trg_cloud_xyzsift);
+
+		if(!in_save_src_cloud_trigger.empty()) {
+			pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp (new pcl::PointCloud<PointXYZSIFT>);
+			pcl::PointCloud<PointXYZSIFT>::Ptr tmp = trg_cloud_xyzsift;
+
+			// Transform it.
+			pcl::transformPointCloud(*tmp, *trans_tmp, result);
+
+			Eigen::Matrix<float, 3, 1> src_points, tgt_points;
+			fstream plik3;
+			stringstream name;
+			name << "/home/mort/wyniki/punkty/wynikiWidokNr" << counter << ".txt";
+			plik3.open(name.str().c_str(), ios::out | ios::app);
+
+			for (int i = 0; i < src_cloud_xyzsift.get()->points.size(); i++) {
+				src_points
+				<< src_cloud_xyzsift.get()->points[i].x, src_cloud_xyzsift.get()->points[i].y, src_cloud_xyzsift.get()->points[i].z;
+				tgt_points
+				<< trans_tmp.get()->points[i].x, trans_tmp.get()->points[i].y, trans_tmp.get()->points[i].z;
+				float d = (src_points - tgt_points).norm();
+				plik3 << d << endl;
+			}
+			in_save_src_cloud_trigger.read();
+			counter++;
+		}
+
 	}		//: else - !src_cloud_xyzrgb->empty ()
 
-			// Return the transformation.
+	// Return the transformation.
 	CLOG(LINFO) << "transformation: " << result;
 	this->result = result;
 	out_transformation_xyzrgb.write(result);

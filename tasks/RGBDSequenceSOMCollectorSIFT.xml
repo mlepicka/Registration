@@ -132,6 +132,12 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
 				<Component name="InitialTransformation" type="CvCoreTypes:HomogenousMatrixProvider" priority="40" bump="0">
+					<param name="offset.x">0.005</param>
+					<param name="offset.y">0.005</param>
+					<param name="offset.z">0.005</param>
+					<param name="offset.roll">0.1</param>
+					<param name="offset.pitch">0.1</param>
+					<param name="offset.yaw">0.1</param>				
 				</Component>
 
 				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
@@ -142,17 +148,14 @@
 					<param name="ICP.UseColour">0</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.UseSIFT">1</param>
-					<param name="ICP.MaxCorrespondenceDistance">0.01</param>
+					<param name="ICP.MaxCorrespondenceDistance">0.05</param>
 					<param name="ICP.MaximumIterations">50</param>
-					<param name="ICP.EuclideanFitnessEpsilon">0.0001</param>
-					<param name="ICP.TransformationEpsilon">1e-20</param>
-				</Component>
-
-				<Component name="CorrespondenceEstimation" type="Registration:CorrespondenceEstimation" priority="42" bump="0">
+					<param name="ICP.EuclideanFitnessEpsilon">0.000000001</param>
+					<param name="ICP.TransformationEpsilon">1e-200</param>
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="44" bump="0">
-                    <param name="CloudsLimit">1</param>
+                    <param name="CloudsLimit">2</param>
 					<param name="ReturnPreviousMergedCloud">0</param>
 				</Component>
 
@@ -166,7 +169,8 @@
 					<param name="base_name">view</param>
 					<param name="binary">1</param>
 				</Component>
-
+				<Component name="Stats" type="CvBasic:CalcStatistics" priority="45" bump="0">
+				</Component>
 			</Executor>
 		</Subtask>
 
@@ -199,6 +203,7 @@
 			<sink>PairwiseRegistration.in_save_src_cloud_trigger</sink>
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 			<sink>Writer.in_save_cloud_trigger</sink><!---->
+			<sink>Stats.in_trigger</sink>
 		</Source>
 
 		<Source name="DepthSequence.out_img">
@@ -269,6 +274,8 @@
 
 		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
 			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
+			<sink>CloudStorage.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
 
 
@@ -285,6 +292,8 @@
 
 		<Source name="SIFT2SPCConverter.out_cloud_xyzsift">
 			<sink>CloudTransformer.in_cloud_xyzsift</sink>
+			<sink>CloudStorage.in_cloud_xyzsift</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzsift</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -293,6 +302,8 @@
 
 		<Source name= "InitialTransformation.out_homogMatrix">
 			<sink>CloudTransformer.in_hm</sink>
+			<sink>CloudStorage.in_transformation</sink>
+			<sink>Stats.in_homogMatrix_right</sink>
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
@@ -302,23 +313,12 @@
 
 		<Source name= "CloudTransformer.out_cloud_xyzsift">
 			<sink>PairwiseRegistration.in_trg_cloud_xyzsift</sink>
-			<sink>CorrespondenceEstimation.in_trg_cloud_xyzsift</sink>
 			<sink>CloudStorage.in_cloud_xyzsift</sink>
 		</Source>
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>
-		</Source>
-
-		<Source name="CloudStorage.out_previous_cloud_xyzrgb">
-			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
-		</Source>
-		<Source name="CorrespondenceEstimation.out_corest">
-			<sink>PairwiseRegistration.in_correspondences</sink>
-		</Source>
-		<Source name="CloudStorage.out_previous_cloud_xyzsift">
-			<sink>CorrespondenceEstimation.in_src_cloud_xyzsift</sink>
-			<sink>PairwiseRegistration.in_src_cloud_xyzsift</sink>
+			<sink>Stats.in_homogMatrix</sink>
 		</Source>
 		<Source name="CloudStorage.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>

@@ -132,13 +132,14 @@ protected:
 	/// Align XYZ clouds - handler.
 //	void pairwise_registration_xyz();
 	Types::HomogMatrix result;
-
+	/// Number of views.
+		int counter;
 	/// Aligns XYZRGB clouds - handler.
 	void pairwise_registration_xyzrgb();
 	void pairwise_registration_xyzsift();
 	// Performs ICP-based pairwise registration.
 	Types::HomogMatrix pairwise_icp_based_registration_xyzrgb(pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_, pcl::PointCloud<pcl::PointXYZRGB>::Ptr trg_cloud_xyzrgb_);
-	Types::HomogMatrix pairwise_icp_based_registration_xyzsift(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_,pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr  correspondences);
+	Types::HomogMatrix pairwise_icp_based_registration_xyzsift(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_);
 };
 
 } //: namespace PairwiseRegistration
