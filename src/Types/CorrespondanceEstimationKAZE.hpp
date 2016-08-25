@@ -1,12 +1,12 @@
 /*
- * CorrespondanceEstimationSIFT.hpp
+ * CorrespondanceEstimationKAZE.hpp
  *
  *  Created on: 10 lut 2016
  *      Author: mlepicka
  */
 
-#ifndef CORRESPONDENCE_ESTIMATION_SIFT_H_
-#define CORRESPONDENCE_ESTIMATION_SIFT_H_
+#ifndef CORRESPONDENCE_ESTIMATION_KAZE_H_
+#define CORRESPONDENCE_ESTIMATION_KAZE_H_
 
 #include <string>
 #include <iostream>
@@ -25,7 +25,7 @@
 namespace pcl {
 namespace registration {
 template<typename PointSource, typename PointTarget, typename Scalar = float>
-class CorrespondenceEstimationSIFT:
+class CorrespondenceEstimationKAZE:
 public CorrespondenceEstimation<PointSource, PointTarget, Scalar> {
 public:
 	typedef boost::shared_ptr<
@@ -62,12 +62,12 @@ public:
 	typedef typename KdTree::PointRepresentationConstPtr PointRepresentationConstPtr;
 
 	/** \brief Empty constructor. */
-	CorrespondenceEstimationSIFT() {
-		corr_name_ = "CorrespondenceEstimationSIFT";
+	CorrespondenceEstimationKAZE() {
+		corr_name_ = "CorrespondenceEstimationKAZE";
 	}
 
 	/** \brief Empty destructor */
-	virtual ~CorrespondenceEstimationSIFT() {
+	virtual ~CorrespondenceEstimationKAZE() {
 	}
 
 	/** \brief Determine the correspondences between input and target cloud.
@@ -85,10 +85,10 @@ public:
 		std::vector<float> distance(1);
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
-		SIFTFeatureRepresentation::Ptr point_representation(
-				new SIFTFeatureRepresentation());
+		KAZEFeatureRepresentation::Ptr point_representation(
+				new KAZEFeatureRepresentation());
 
-		pcl::KdTreeFLANN<PointXYZSIFT> match_search;
+		pcl::KdTreeFLANN<PointXYZKAZE> match_search;
 		match_search.setPointRepresentation(point_representation);
 		match_search.setInputCloud (target_);
 
@@ -174,9 +174,9 @@ public:
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
 		int target_idx = 0;
-		SIFTFeatureRepresentation::Ptr point_representation(
-						new SIFTFeatureRepresentation());
-		pcl::KdTreeFLANN<PointXYZSIFT> match_search;
+		KAZEFeatureRepresentation::Ptr point_representation(
+						new KAZEFeatureRepresentation());
+		pcl::KdTreeFLANN<PointXYZKAZE> match_search;
 		match_search.setPointRepresentation(point_representation);
 		match_search.setInputCloud (target_);
 
@@ -257,5 +257,5 @@ public:
 
 #include <pcl/registration/impl/correspondence_estimation.hpp>
 
-#endif /*CORRESPONDENCE_ESTIMATION_SIFT_H_ */
+#endif /*CORRESPONDENCE_ESTIMATION_KAZE_H_ */
 

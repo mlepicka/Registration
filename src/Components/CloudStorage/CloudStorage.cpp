@@ -44,6 +44,7 @@ void CloudStorage::prepareInterface() {
 //	registerStream("in_cloud_xyz", &in_cloud_xyz);
 	registerStream("in_cloud_xyzrgb", &in_cloud_xyzrgb);
 	registerStream("in_cloud_xyzsift", &in_cloud_xyzsift);
+	registerStream("in_cloud_xyzkaze", &in_cloud_xyzkaze);
 	registerStream("in_transformation", &in_transformation);
 	registerStream("in_add_cloud_trigger", &in_add_cloud_trigger);
 
@@ -51,8 +52,10 @@ void CloudStorage::prepareInterface() {
 //	registerStream("out_cloud_xyz", &out_cloud_xyz);
 	registerStream("out_cloud_xyzrgb", &out_cloud_xyzrgb);
 	registerStream("out_cloud_xyzsift", &out_cloud_xyzsift);
+	registerStream("out_cloud_xyzkaze", &out_cloud_xyzkaze);
 	registerStream("out_previous_cloud_xyzrgb", &out_previous_cloud_xyzrgb);
 	registerStream("out_previous_cloud_xyzsift", &out_previous_cloud_xyzsift);
+	registerStream("out_previous_cloud_xyzkaze", &out_previous_cloud_xyzkaze);
 
 	// Register button-triggered handlers.
 	registerHandler("Add cloud", boost::bind(&CloudStorage::onAddCloudButtonPressed, this));
@@ -127,7 +130,7 @@ void CloudStorage::update_storage(){
 	// Overwrite last cloud.
 	if (prop_overwrite_last_cloud) {
 		// Check if something can be added - if so, remove last cloud.
-		if(!in_transformation.empty() && (!in_cloud_xyz.empty() || !in_cloud_xyzrgb.empty() || !in_cloud_xyzsift.empty())){
+		if(!in_transformation.empty() && (!in_cloud_xyz.empty() || !in_cloud_xyzrgb.empty() || !in_cloud_xyzsift.empty() || !in_cloud_xyzkaze.empty())){
 			remove_last_cloud_flag = true;
 			add_cloud_flag = true;
 		}//: if
@@ -158,6 +161,8 @@ void CloudStorage::update_storage(){
 				clouds_xyzrgb.erase(clouds_xyzrgb.begin());
 			if(!clouds_xyzsift.empty())
 				clouds_xyzsift.erase(clouds_xyzsift.begin());
+			if(!clouds_xyzkaze.empty())
+				clouds_xyzkaze.erase(clouds_xyzkaze.begin());
 		}//: if
 	}//: if
 
@@ -177,10 +182,11 @@ void CloudStorage::add_cloud_to_storage(){
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_xyz;
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_xyzrgb;
 	pcl::PointCloud<PointXYZSIFT>::Ptr cloud_xyzsift;
+	pcl::PointCloud<PointXYZKAZE>::Ptr cloud_xyzkaze;
 
 	try{ 
 		// Check homogenous matrix and add to storage only if any of the clouds is present!
-		if(in_transformation.empty() || (in_cloud_xyz.empty() && in_cloud_xyzrgb.empty() && in_cloud_xyzsift.empty())){
+		if(in_transformation.empty() || (in_cloud_xyz.empty() && in_cloud_xyzrgb.empty() && in_cloud_xyzsift.empty() && in_cloud_xyzkaze.empty())){
 			throw exception();
 		}
 
@@ -212,7 +218,14 @@ void CloudStorage::add_cloud_to_storage(){
 			clouds_xyzsift.push_back(cloud_xyzsift);
 		}//: if
 
-	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
+		// Try to add XYZKAZE.
+		if(!in_cloud_xyzkaze.empty()){
+			CLOG(LINFO) << "Adding XYZKAZE cloud to storage";
+			cloud_xyzkaze = in_cloud_xyzkaze.read();
+			clouds_xyzkaze.push_back(cloud_xyzkaze);
+		}//: if
+
+	CLOG(LINFO) << "ADD: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size() << " clouds_xyzkaze.size(): "<< clouds_xyzkaze.size();
 	} catch (...) {
 		CLOG(LERROR) << "Cannot add clouds to storage - cloud transformation is required";
 	}//: catch
@@ -232,6 +245,8 @@ void  CloudStorage::remove_last_cloud_to_storage(){
 		clouds_xyzrgb.pop_back();
 	if(!clouds_xyzsift.empty())
 		clouds_xyzsift.pop_back();
+	if(!clouds_xyzkaze.empty())
+		clouds_xyzkaze.pop_back();
 	CLOG(LINFO) << "REM: transformations.size(): "<< transformations.size() << " clouds_xyz.size(): "<< clouds_xyz.size() << " clouds_xyzrgb.size(): "<< clouds_xyzrgb.size() << " clouds_xyzsift.size(): "<< clouds_xyzsift.size();
 }
 
@@ -242,6 +257,7 @@ void CloudStorage::clear_storage(){
 	clouds_xyz.clear();
 	clouds_xyzrgb.clear();
 	clouds_xyzsift.clear();
+	clouds_xyzkaze.clear();
 	// Reset flag.
 	clear_storage_flag = false;
 }
@@ -255,6 +271,7 @@ void  CloudStorage::publish_merged_clouds(){
 	pcl::PointCloud<pcl::PointXYZ>::Ptr merged_cloud_xyz (new pcl::PointCloud<pcl::PointXYZ>);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_cloud_xyzrgb (new pcl::PointCloud<pcl::PointXYZRGB>);
 	pcl::PointCloud<PointXYZSIFT>::Ptr merged_cloud_xyzsift (new pcl::PointCloud<PointXYZSIFT>);
+	pcl::PointCloud<PointXYZKAZE>::Ptr merged_cloud_xyzkaze (new pcl::PointCloud<PointXYZKAZE>);
 
 	// Check size of vector of transformations.
 /*	if (transformations.size() < 1) {
@@ -321,6 +338,25 @@ void  CloudStorage::publish_merged_clouds(){
 		out_cloud_xyzsift.write(merged_cloud_xyzsift);
 	}//: else
 
+	// Merge XYZKAZE cloud - but earlier check size of vector of transformations.
+	if (transformations.size() != clouds_xyzkaze.size()) {
+		CLOG(LINFO) << "Sizes of transformation and clouds_xyzkaze vectors differ!";
+	} else {
+		for (int i = 0 ; i < transformations.size(); i++) {
+			// Get cloud.
+			pcl::PointCloud<PointXYZKAZE>::Ptr trans_tmp (new pcl::PointCloud<PointXYZKAZE>);
+			pcl::PointCloud<PointXYZKAZE>::Ptr tmp = (clouds_xyzkaze[i]);
+			Types::HomogMatrix tmp_hm = transformations[i];
+			// Transform it.
+			pcl::transformPointCloud(*tmp, *trans_tmp, tmp_hm);
+			// Add to merged cloud.
+			*merged_cloud_xyzkaze += *trans_tmp;
+			CLOG(LDEBUG) << "cloud "<< i << " size="<<clouds_xyzkaze[i]->size() << " hm:\n" << tmp_hm;
+		}
+		// Return merged cloud.
+		CLOG(LINFO) << "merged_cloud_xyzkaze->size(): "<< merged_cloud_xyzkaze->size();
+		out_cloud_xyzkaze.write(merged_cloud_xyzkaze);
+	}//: else
 
 }
 
@@ -343,6 +379,8 @@ void  CloudStorage::return_previous_cloud(){
 		// Return merged cloud.
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_previous (new pcl::PointCloud<pcl::PointXYZRGB>);
 		pcl::PointCloud<PointXYZSIFT>::Ptr merged_previous_sift (new pcl::PointCloud<PointXYZSIFT>);
+		pcl::PointCloud<PointXYZKAZE>::Ptr merged_previous_kaze (new pcl::PointCloud<PointXYZKAZE>);
+
 		// Merge all clouds EXCEPT the last (i.e. pairwise registered) one!
 		for (int i = 0 ; i <= transformations.size()-1; i++) {
 			// Get cloud.
@@ -351,17 +389,24 @@ void  CloudStorage::return_previous_cloud(){
 
 			pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp_sift (new pcl::PointCloud<PointXYZSIFT>);
 			pcl::PointCloud<PointXYZSIFT>::Ptr tmp_sift = (clouds_xyzsift[i]);
+
+			pcl::PointCloud<PointXYZKAZE>::Ptr trans_tmp_kaze (new pcl::PointCloud<PointXYZKAZE>);
+			pcl::PointCloud<PointXYZKAZE>::Ptr tmp_kaze = (clouds_xyzkaze[i]);
+
 			// Transform it.
 			pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
 			pcl::transformPointCloud(*tmp_sift, *trans_tmp_sift, transformations[i]);
+			pcl::transformPointCloud(*tmp_kaze, *trans_tmp_kaze, transformations[i]);
 			// Add to merged cloud.
 			*merged_previous += *trans_tmp;
 			*merged_previous_sift += *trans_tmp_sift;
+			*merged_previous_kaze += *trans_tmp_kaze;
 		}
 		// Return merged previous cloud.
 		CLOG(LINFO) << "merged_previous->size(): "<< merged_previous->size();
 		out_previous_cloud_xyzrgb.write(merged_previous);
-		out_previous_cloud_xyzsift.write(merged_previous_sift);
+	//	out_previous_cloud_xyzsift.write(merged_previous_sift);
+		out_previous_cloud_xyzkaze.write(merged_previous_kaze);
 	} else {
 		// Return previous cloud.
 		int i = transformations.size()-1;
@@ -371,12 +416,17 @@ void  CloudStorage::return_previous_cloud(){
 
 		pcl::PointCloud<PointXYZSIFT>::Ptr trans_tmp_sift (new pcl::PointCloud<PointXYZSIFT>);
 		pcl::PointCloud<PointXYZSIFT>::Ptr tmp_sift = (clouds_xyzsift[i]);
-		// Transform it.
-		pcl::transformPointCloud(*tmp_sift, *trans_tmp_sift, transformations[i]);
 
+		pcl::PointCloud<PointXYZKAZE>::Ptr trans_tmp_kaze (new pcl::PointCloud<PointXYZKAZE>);
+		pcl::PointCloud<PointXYZKAZE>::Ptr tmp_kaze = (clouds_xyzkaze[i]);
+		// Transform it.
+		pcl::transformPointCloud(*tmp, *trans_tmp, transformations[i]);
+		pcl::transformPointCloud(*tmp_sift, *trans_tmp_sift, transformations[i]);
+		pcl::transformPointCloud(*tmp_kaze, *trans_tmp_kaze, transformations[i]);
 		// Return previous cloud.
 		out_previous_cloud_xyzrgb.write(trans_tmp);
 		out_previous_cloud_xyzsift.write(trans_tmp_sift);
+		out_previous_cloud_xyzkaze.write(trans_tmp_kaze);
 	}//: else
 }
 

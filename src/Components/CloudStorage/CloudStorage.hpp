@@ -15,6 +15,7 @@
 
 #include "Types/HomogMatrix.hpp"
 #include "Types/PointXYZSIFT.hpp"
+#include "Types/PointXYZKAZE.hpp"
 
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
@@ -71,12 +72,12 @@ protected:
 
 	/// Input stream containing XYZ cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZ>::Ptr, Base::DataStreamBuffer::Newest> in_cloud_xyz;
-
 	/// Input stream containing XYZRGB cloud.
 	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest > in_cloud_xyzrgb;
-
-	/// Input stream containing XYZRGB cloud.
+	/// Input stream containing XYZSIFT cloud.
 	Base::DataStreamIn<pcl::PointCloud<PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest > in_cloud_xyzsift;
+	/// Input stream containing XYZKAZE cloud.
+	Base::DataStreamIn<pcl::PointCloud<PointXYZKAZE>::Ptr, Base::DataStreamBuffer::Newest > in_cloud_xyzkaze;
 
 	/// Input stream containing transformation between clouds.
 	Base::DataStreamIn<Types::HomogMatrix, Base::DataStreamBuffer::Newest> in_transformation;
@@ -86,17 +87,18 @@ protected:
 
 	// Output stream containing merged XYZ cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZ>::Ptr> out_cloud_xyz;
-
 	// Output stream containing merged XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_cloud_xyzrgb;
-
 	// Output stream containing merged XYZSIFT cloud.
 	Base::DataStreamOut<pcl::PointCloud<PointXYZSIFT>::Ptr> out_cloud_xyzsift;
+	// Output stream containing merged XYZSIFT cloud.
+	Base::DataStreamOut<pcl::PointCloud<PointXYZKAZE>::Ptr> out_cloud_xyzkaze;
 
 	// Output stream: previous  XYZRGB cloud.
 	Base::DataStreamOut<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> out_previous_cloud_xyzrgb;
-
 	Base::DataStreamOut<pcl::PointCloud<PointXYZSIFT>::Ptr> out_previous_cloud_xyzsift;
+	Base::DataStreamOut<pcl::PointCloud<PointXYZKAZE>::Ptr> out_previous_cloud_xyzkaze;
+
 	///  Property - store first cloud.
 	Base::Property<bool> prop_store_first_cloud;
 
@@ -170,6 +172,8 @@ private:
 	// Vector containing XYZSIFT clouds.
 	std::vector<pcl::PointCloud<PointXYZSIFT>::Ptr> clouds_xyzsift;
 
+	// Vector containing XYZKAZE clouds.
+	std::vector<pcl::PointCloud<PointXYZKAZE>::Ptr> clouds_xyzkaze;
 };
 
 } //: namespace CloudStorage
