@@ -137,6 +137,10 @@ protected:
 	///  Property - use KAZE in ICP.
 	Base::Property<bool> prop_ICP_KAZE;
 
+	///  Property - path to save calculation results
+	Base::Property<std::string> prop_calc_path;
+
+
 	/// Align XYZ clouds - handler.
 //	void pairwise_registration_xyz();
 	Types::HomogMatrix result;
@@ -152,6 +156,13 @@ protected:
 	Types::HomogMatrix pairwise_icp_based_registration_xyzsift(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_xyzsift_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_xyzsift_);
 	Types::HomogMatrix pairwise_icp_based_registration_xyzkaze(pcl::PointCloud<PointXYZKAZE>::Ptr src_cloud_xyzkaze_, pcl::PointCloud<PointXYZKAZE>::Ptr trg_cloud_xyzkaze_);
 
+private:
+	void saveCalculations(
+			const double nr_iterations,
+			const double size_of_cloud,
+			double time,
+			double fitness_score,
+			double correspondences);
 };
 
 } //: namespace PairwiseRegistration

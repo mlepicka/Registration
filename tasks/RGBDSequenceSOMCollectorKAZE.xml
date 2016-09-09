@@ -108,9 +108,11 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 
                                 <Component name="SIFT" type="CvBasic:CvSIFT" priority="30" bump="0">
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
  				<Component name="KAZE" type="CvBasic:CvKAZE" priority="30" bump="0">
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
                                 <Component name="SIFT2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
@@ -154,11 +156,12 @@
 					<param name="ICP.UseColour">0</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.UseSIFT">0</param>
-					<param name="ICP.UseKAZE">1</param>
+					<param name="ICP.UseKAZE">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.05</param>
 					<param name="ICP.MaximumIterations">50</param>
 					<param name="ICP.EuclideanFitnessEpsilon">0.000000001</param>
 					<param name="ICP.TransformationEpsilon">1e-200</param>
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="44" bump="0">
@@ -177,6 +180,7 @@
 					<param name="binary">1</param>
 				</Component>
 				<Component name="Stats" type="CvBasic:CalcStatistics" priority="45" bump="0">
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 			</Executor>
 		</Subtask>
@@ -250,14 +254,14 @@
 			<sink>SolvePNPinv.in_object3d</sink>	
 		</Source>
 
-		<Source name= "SolvePNPinv.out_homogMatrix">
-			<sink>SolveLocation.in_homogMatrix</sink>
+		<Source name= "SolvePNPinv.out_homog_matrix">
+			<sink>SolveLocation.in_homog_matrix</sink>
 		</Source>
-		<Source name= "SolvePNP.out_homogMatrix">
-			<sink>SolveLocation.in_homogMatrix</sink>
+		<Source name= "SolvePNP.out_homog_matrix">
+			<sink>SolveLocation.in_homog_matrix</sink>
 		</Source>
-		<Source name= "SolveLocation.out_homogMatrix">
-			<sink>DepthTransform.in_homogMatrix</sink>
+		<Source name= "SolveLocation.out_homog_matrix">
+			<sink>DepthTransform.in_homog_matrix</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -328,7 +332,7 @@
 		<Source name= "InitialTransformation.out_homogMatrix">
 			<sink>CloudTransformer.in_hm</sink>
 			<sink>CloudStorage.in_transformation</sink>
-			<sink>Stats.in_homogMatrix_right</sink>
+			<sink>Stats.in_homog_matrix_right</sink>
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
@@ -348,7 +352,7 @@
 
 		<Source name="PairwiseRegistration.out_transformation_xyzrgb">
 			<sink>CloudStorage.in_transformation</sink>
-			<sink>Stats.in_homogMatrix</sink>
+			<sink>Stats.in_homog_matrix</sink>
 		</Source>
 		<Source name="CloudStorage.out_cloud_xyzrgb">
 			<sink>Viewer.in_cloud_xyzrgb</sink>

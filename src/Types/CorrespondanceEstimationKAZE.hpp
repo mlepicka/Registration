@@ -109,8 +109,8 @@ public:
 				int found_neighs = match_search.nearestKSearch(input_->points[*idx],
 						1, neigh_indices, neigh_sqr_dists);
 
-				if (neigh_sqr_dists[0] > max_dist_sqr)
-					continue;
+				//if (neigh_sqr_dists[0] > max_dist_sqr)
+				//	continue;
 
 //				if (found_neighs == 1) // && neigh_sqr_dists[0] < max_distance) //  add match only if the squared descriptor distance is less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
 //				if(neigh_sqr_dists[0] < 0.25f)
