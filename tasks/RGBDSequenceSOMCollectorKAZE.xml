@@ -30,15 +30,15 @@
                     <param name="auto_trigger">1</param>
 				</Component>
 
-								<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
-					<param name="sequence.directory">/home/mort/Objects/vega/</param>
+				<Component name="RGBSequence" type="CvBasic:Sequence" priority="2" bump="0">
+					<param name="sequence.directory">/home/mort/Objects/auto/</param>
 					<param name="sequence.pattern">.*_rgb.png</param>
-                    <param name="mode.loop">0</param>
-                    <param name="mode.auto_next_image">0</param>
+                    			<param name="mode.loop">0</param>
+                    			<param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
-					<param name="sequence.directory">/home/mort/Objects/vega/</param>
+					<param name="sequence.directory">/home/mort/Objects/auto/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
                     <param name="mode.loop">0</param>
                     <param name="mode.auto_next_image">0</param>
@@ -113,6 +113,7 @@
 
  				<Component name="KAZE" type="CvBasic:CvKAZE" priority="30" bump="0">
 					<param name="Calculations_path">/home/mort/wyniki/</param>
+					<param name="Diffusivity">3</param>
 				</Component>
 
                                 <Component name="SIFT2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
@@ -156,17 +157,17 @@
 					<param name="ICP.UseColour">0</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.UseSIFT">0</param>
-					<param name="ICP.UseKAZE">0</param>
-					<param name="ICP.MaxCorrespondenceDistance">0.05</param>
-					<param name="ICP.MaximumIterations">50</param>
+					<param name="ICP.UseKAZE">1</param>
+					<param name="ICP.MaxCorrespondenceDistance">0.012</param>
+					<param name="ICP.MaximumIterations">100</param>
 					<param name="ICP.EuclideanFitnessEpsilon">0.000000001</param>
 					<param name="ICP.TransformationEpsilon">1e-200</param>
 					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
 				<Component name="CloudStorage" type="Registration:CloudStorage" priority="44" bump="0">
-                    <param name="CloudsLimit">2</param>
-					<param name="ReturnPreviousMergedCloud">0</param>
+                    			<param name="CloudsLimit">2</param>
+					<param name="ReturnPreviousMergedCloud">1</param>
 				</Component>
 
 

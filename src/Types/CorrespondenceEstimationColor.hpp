@@ -91,7 +91,6 @@ public:
 		//narazie na pale
 		float minRGB = 2000;
 		int minIndex = -2;
-		float distance_ = 1000;
 
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;

@@ -78,7 +78,9 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 				"ICP.TransformationEpsilon", 1e-8), prop_ICP_EuclideanFitnessEpsilon(
 				"ICP.EuclideanFitnessEpsilon", 1), prop_ICP_colour(
 				"ICP.UseColour", true), prop_ICP_normals("ICP.UseNormals",
-				true), prop_ICP_SIFT("ICP.UseSIFT", true), prop_ICP_KAZE("ICP.UseKAZE", true), prop_calc_path("Calculations_path",std::string(".")) {
+				true), prop_ICP_SIFT("ICP.UseSIFT", true), prop_ICP_KAZE(
+				"ICP.UseKAZE", true), prop_calc_path("Calculations_path",
+				std::string(".")) {
 	// Register ICP properties.
 	registerProperty(prop_ICP);
 	registerProperty(prop_ICP_MaxCorrespondenceDistance);
@@ -117,8 +119,8 @@ void PairwiseRegistration::prepareInterface() {
 	addDependency("pairwise_registration_xyzsift", &in_src_cloud_xyzsift);
 
 	registerHandler("pairwise_registration_xyzkaze",
-				boost::bind(&PairwiseRegistration::pairwise_registration_xyzkaze,
-						this));
+			boost::bind(&PairwiseRegistration::pairwise_registration_xyzkaze,
+					this));
 	addDependency("pairwise_registration_xyzkaze", &in_trg_cloud_xyzkaze);
 	addDependency("pairwise_registration_xyzkaze", &in_src_cloud_xyzkaze);
 
@@ -138,7 +140,7 @@ bool PairwiseRegistration::onInit() {
 	src_cloud_xyzsift = pcl::PointCloud<PointXYZSIFT>::Ptr(
 			new pcl::PointCloud<PointXYZSIFT>);
 	src_cloud_xyzkaze = pcl::PointCloud<PointXYZKAZE>::Ptr(
-				new pcl::PointCloud<PointXYZKAZE>);
+			new pcl::PointCloud<PointXYZKAZE>);
 	return true;
 }
 
@@ -154,12 +156,11 @@ bool PairwiseRegistration::onStart() {
 	return true;
 }
 
-void PairwiseRegistration::saveCalculations(
-		const double nr_iterations,
-		const double size_of_cloud,
-		double time, double fitness_score, double correspondences) {
+void PairwiseRegistration::saveCalculations(const double nr_iterations,
+		const double size_of_cloud, double time, double fitness_score,
+		double correspondences) {
 
-	CLOG(LINFO) << "Saving calculations in path: " << string(prop_calc_path) << endl;
+	CLOG(LINFO)<< "Saving calculations in path: " << string(prop_calc_path) << endl;
 	std::ofstream iterations, cloud_size, proceed_time, fitness_score_value, nr_correspondences;
 
 	iterations.open((string(prop_calc_path) + string("ilosc_iteracji.txt")).c_str(),
@@ -173,10 +174,10 @@ void PairwiseRegistration::saveCalculations(
 			ios::out | ios::app);
 
 	fitness_score_value.open((string(prop_calc_path) + string("wartosc_funkcji_bledu.txt")).c_str(),
-				ios::out | ios::app);
+			ios::out | ios::app);
 
 	nr_correspondences.open((string(prop_calc_path) + string("znalezione_dopasowania.txt")).c_str(),
-				ios::out | ios::app);
+			ios::out | ios::app);
 
 	iterations << nr_iterations << endl;
 	cloud_size << size_of_cloud << endl;
@@ -282,15 +283,14 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzkaze
 		<< " correspondences: " << icp.correspondences_->size();
 
 		if(!in_save_src_cloud_trigger.empty()) {
-					saveCalculations(icp.nr_iterations_, src_cloud_xyzkaze_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-				}
+			saveCalculations(icp.nr_iterations_, src_cloud_xyzkaze_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+		}
 		// Set resulting transformation.
 		result.matrix() = icp_trans.matrix().inverse();
 	}
 	return result;
 
 }
-
 
 Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud_xyzrgb_,
@@ -333,7 +333,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 
 // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
 		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
+// Set the maximum number of iterations (criterion 1)
 		icp.setMaximumIterations (prop_ICP_MaximumIterations);
 		// Set the transformation epsilon (criterion 2)
 		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
@@ -400,7 +400,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 
 // Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
 		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
+// Set the maximum number of iterations (criterion 1)
 		icp.setMaximumIterations (2);
 		// Set the transformation epsilon (criterion 2)
 		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
@@ -542,28 +542,28 @@ void PairwiseRegistration::pairwise_registration_xyzrgb() {
 		result = pairwise_icp_based_registration_xyzrgb(src_cloud_xyzrgb, trg_cloud_xyzrgb);
 
 		if(!in_save_src_cloud_trigger.empty()) {
-				pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
-				pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = trg_cloud_xyzrgb;
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp (new pcl::PointCloud<pcl::PointXYZRGB>);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp = trg_cloud_xyzrgb;
 
-				// Transform it.
-				pcl::transformPointCloud(*tmp, *trans_tmp, result);
+			// Transform it.
+			pcl::transformPointCloud(*tmp, *trans_tmp, result);
 
-				Eigen::Matrix<float, 3, 1> src_points, tgt_points;
-				fstream dists_in_cloud;
-				stringstream name;
-				name << string(prop_calc_path) <<"punkty/odeglosci_widok_nr_" << counter << ".txt";
-				dists_in_cloud.open(name.str().c_str(), ios::out | ios::app);
+			Eigen::Matrix<float, 3, 1> src_points, tgt_points;
+			fstream dists_in_cloud;
+			stringstream name;
+			name << string(prop_calc_path) <<"punkty/odeglosci_widok_nr_" << counter << ".txt";
+			dists_in_cloud.open(name.str().c_str(), ios::out | ios::app);
 
-				for (int i = 0; i < src_cloud_xyzrgb.get()->points.size(); i++) {
-					src_points
-					<< src_cloud_xyzrgb.get()->points[i].x, src_cloud_xyzrgb.get()->points[i].y, src_cloud_xyzrgb.get()->points[i].z;
-					tgt_points
-					<< trans_tmp.get()->points[i].x, trans_tmp.get()->points[i].y, trans_tmp.get()->points[i].z;
-					float d = (src_points - tgt_points).norm();
-					dists_in_cloud << d << endl;
-				}
-				in_save_src_cloud_trigger.read();
-				counter++;
+			for (int i = 0; i < src_cloud_xyzrgb.get()->points.size(); i++) {
+				src_points
+				<< src_cloud_xyzrgb.get()->points[i].x, src_cloud_xyzrgb.get()->points[i].y, src_cloud_xyzrgb.get()->points[i].z;
+				tgt_points
+				<< trans_tmp.get()->points[i].x, trans_tmp.get()->points[i].y, trans_tmp.get()->points[i].z;
+				float d = (src_points - tgt_points).norm();
+				dists_in_cloud << d << endl;
+			}
+			in_save_src_cloud_trigger.read();
+			counter++;
 		}
 
 	}		//: else - !src_cloud_xyzrgb->empty ()
@@ -580,7 +580,7 @@ void PairwiseRegistration::pairwise_registration_xyzrgb() {
 void PairwiseRegistration::pairwise_registration_xyzsift() {
 	CLOG(LTRACE)<< "pairwise_registration_xyzsift";
 
-	if(prop_ICP_SIFT){
+	if(prop_ICP_SIFT) {
 		// Temporary variable storing the resulting transformation.
 		Types::HomogMatrix result;
 		// Read current cloud from port.
@@ -647,7 +647,7 @@ void PairwiseRegistration::pairwise_registration_xyzsift() {
 
 void PairwiseRegistration::pairwise_registration_xyzkaze() {
 	CLOG(LTRACE)<< "pairwise_registration_xyzkaze";
-	if(prop_ICP_KAZE){
+	if(prop_ICP_KAZE) {
 		// Temporary variable storing the resulting transformation.
 		Types::HomogMatrix result;
 		// Read current cloud from port.
@@ -710,7 +710,6 @@ void PairwiseRegistration::pairwise_registration_xyzkaze() {
 		out_transformation_xyzrgb.write(result);
 	}
 }
-
 
 } //: namespace PairwiseRegistration
 } //: namespace Processors

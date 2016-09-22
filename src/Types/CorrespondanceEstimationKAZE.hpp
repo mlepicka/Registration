@@ -10,7 +10,7 @@
 
 #include <string>
 #include <iostream>
-
+#include "Common/Logger.hpp"
 #include <pcl/pcl_base.h>
 #include <pcl/common/transforms.h>
 #include <pcl/search/kdtree.h>
@@ -25,8 +25,8 @@
 namespace pcl {
 namespace registration {
 template<typename PointSource, typename PointTarget, typename Scalar = float>
-class CorrespondenceEstimationKAZE:
-public CorrespondenceEstimation<PointSource, PointTarget, Scalar> {
+class CorrespondenceEstimationKAZE: public CorrespondenceEstimation<PointSource,
+		PointTarget, Scalar> {
 public:
 	typedef boost::shared_ptr<
 			CorrespondenceEstimation<PointSource, PointTarget, Scalar> > Ptr;
@@ -64,6 +64,7 @@ public:
 	/** \brief Empty constructor. */
 	CorrespondenceEstimationKAZE() {
 		corr_name_ = "CorrespondenceEstimationKAZE";
+
 	}
 
 	/** \brief Empty destructor */
@@ -79,19 +80,13 @@ public:
 
 		if (!initCompute())
 			return;
-		double max_dist_sqr = max_distance * max_distance;
+		double max_xyz_dist_sqr = max_distance * max_distance;
 		correspondences.resize(indices_->size());
 		std::vector<int> index(1);
 		std::vector<float> distance(1);
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
-		KAZEFeatureRepresentation::Ptr point_representation(
-				new KAZEFeatureRepresentation());
-
-		pcl::KdTreeFLANN<PointXYZKAZE> match_search;
-		match_search.setPointRepresentation(point_representation);
-		match_search.setInputCloud (target_);
-
+		int descriptor_size;
 		// Check if the template types are the same. If true, avoid a copy.
 		// Both point types MUST be registered using the POINT_CLOUD_REGISTER_POINT_STRUCT macro!
 		if (isSamePointType<PointSource, PointTarget>()) {
@@ -99,27 +94,58 @@ public:
 			for (std::vector<int>::const_iterator idx = indices_->begin();
 					idx != indices_->end(); ++idx) {
 
-				std::vector<int> neigh_indices(1);
-				std::vector<float> neigh_sqr_dists(1);
+				std::vector<int> neigh_xyz_indices(1);
+				std::vector<float> neigh_xyz_sqr_dists(1);
+
 				if (!pcl_isfinite (input_->points[*idx].descriptor[0])) //skipping NaNs
 				{
 					continue;
 				}
 
-				int found_neighs = match_search.nearestKSearch(input_->points[*idx],
-						1, neigh_indices, neigh_sqr_dists);
+				const float * descriptor = input_->points[*idx].descriptor;
+				if (!input_->points[*idx].extended) {
+					descriptor_size = 64;
+				} else {
+					descriptor_size = 128;
+				}
+				int max_neighs = 5;
 
-				//if (neigh_sqr_dists[0] > max_dist_sqr)
-				//	continue;
+				int found_xyz_neighs = tree_->nearestKSearch(
+						input_->points[*idx], max_neighs, neigh_xyz_indices,
+						neigh_xyz_sqr_dists);
 
-//				if (found_neighs == 1) // && neigh_sqr_dists[0] < max_distance) //  add match only if the squared descriptor distance is less than 0.25 (SHOT descriptor distances are between 0 and 1 by design)
-//				if(neigh_sqr_dists[0] < 0.25f)
-//				{
+				float min_distance = neigh_xyz_sqr_dists[max_neighs - 1];
+				float min_descriptor_distance = 999999;
+				int min_idx = max_neighs - 1;
+
+				for (int i = 0; i < neigh_xyz_indices.size(); i++) {
+
+					const float* descriptor_t =
+							target_->points[neigh_xyz_indices[i]].descriptor;
+
+					float desc_distance = 0.0;
+
+					for (int j = 0; j < descriptor_size; j++) {
+						float diff = descriptor[j] - descriptor_t[j];
+						desc_distance += diff * diff;
+					}
+
+					desc_distance = sqrt(desc_distance);
+
+					if (desc_distance < min_descriptor_distance) {
+						min_descriptor_distance = desc_distance;
+						min_idx = i;
+						min_distance = neigh_xyz_sqr_dists[i];
+					}
+				}
+
+				if (min_distance > max_xyz_dist_sqr)
+					continue;
+
 				corr.index_query = *idx;
-				corr.index_match = neigh_indices[0];
-				corr.distance = neigh_sqr_dists[0];
+				corr.index_match = neigh_xyz_indices[min_idx];
+				corr.distance = min_distance;
 				correspondences[nr_valid_correspondences++] = corr;
-//				}
 
 			}
 		} else {
@@ -132,7 +158,7 @@ public:
 
 				tree_->nearestKSearch(pt, 1, index, distance);
 
-				if (distance[0] > max_dist_sqr)
+				if (distance[0] > max_xyz_dist_sqr)
 					continue;
 
 				corr.index_query = *idx;
@@ -174,14 +200,8 @@ public:
 		pcl::Correspondence corr;
 		unsigned int nr_valid_correspondences = 0;
 		int target_idx = 0;
-		KAZEFeatureRepresentation::Ptr point_representation(
-						new KAZEFeatureRepresentation());
-		pcl::KdTreeFLANN<PointXYZKAZE> match_search;
-		match_search.setPointRepresentation(point_representation);
-		match_search.setInputCloud (target_);
+		int descriptor_size;
 
-		tree_reciprocal_->setPointRepresentation(point_representation);
-		tree_->setPointRepresentation(point_representation);
 		// Check if the template types are the same. If true, avoid a copy.
 		// Both point types MUST be registered using the POINT_CLOUD_REGISTER_POINT_STRUCT macro!
 		if (isSamePointType<PointSource, PointTarget>()) {
@@ -189,22 +209,95 @@ public:
 			for (std::vector<int>::const_iterator idx = indices_->begin();
 					idx != indices_->end(); ++idx) {
 
-				match_search.nearestKSearch(input_->points[*idx], 1, index, distance);
+				std::vector<int> neigh_xyz_indices(1);
+				std::vector<float> neigh_xyz_sqr_dists(1);
 
-//				if (distance[0] > max_dist_sqr)
-//					continue;
+				if (!pcl_isfinite (input_->points[*idx].descriptor[0])) //skipping NaNs
+				{
+					continue;
+				}
 
-				target_idx = index[0];
+				const float * descriptor = input_->points[*idx].descriptor;
+				if (!input_->points[*idx].extended) {
+					descriptor_size = 64;
+				} else {
+					descriptor_size = 128;
+				}
 
-				tree_reciprocal_->nearestKSearch(target_->points[target_idx], 1,
-						index_reciprocal, distance_reciprocal);
-				if ( *idx != index_reciprocal[0])
+				int max_neighs = 5;
+
+				int found_xyz_neighs = tree_->nearestKSearch(
+						input_->points[*idx], max_neighs, neigh_xyz_indices,
+						neigh_xyz_sqr_dists);
+
+				float min_distance = neigh_xyz_sqr_dists[max_neighs - 1];
+				float min_descriptor_distance = 999999;
+				int min_idx = max_neighs - 1;
+				for (int i = 0; i < neigh_xyz_indices.size(); i++) {
+
+					const float* descriptor_t =
+							target_->points[neigh_xyz_indices[i]].descriptor;
+
+					float desc_distance = 0.0;
+
+					for (int j = 0; j < descriptor_size; j++) {
+						float diff = descriptor[j] - descriptor_t[j];
+						desc_distance += diff * diff;
+					}
+
+					desc_distance = sqrt(desc_distance);
+
+					if (desc_distance < min_descriptor_distance) {
+						min_descriptor_distance = desc_distance;
+						min_idx = i;
+						min_distance = neigh_xyz_sqr_dists[i];
+					}
+				}
+
+				target_idx = min_idx;
+
+				tree_reciprocal_->nearestKSearch(target_->points[target_idx],
+						max_neighs, index_reciprocal, distance_reciprocal);
+
+				float min_distance_reciprocal = distance_reciprocal[max_neighs
+						- 1];
+				float min_descriptor_distance_reciprocal = 999999;
+				int min_idx_reciprocal = max_neighs - 1;
+				const float * descriptor_reciprocal =
+						target_->points[*idx].descriptor;
+
+				for (int i = 0; i < index_reciprocal.size(); i++) {
+
+					const float* descriptor_t =
+							input_->points[index_reciprocal[i]].descriptor;
+
+					float desc_distance = 0.0;
+
+					for (int j = 0; j < descriptor_size; j++) {
+						float diff = descriptor_reciprocal[j] - descriptor_t[j];
+						desc_distance += diff * diff;
+					}
+
+					desc_distance = sqrt(desc_distance);
+
+					if (desc_distance < min_descriptor_distance_reciprocal) {
+						min_descriptor_distance_reciprocal = desc_distance;
+						min_idx_reciprocal = i;
+						min_distance_reciprocal = distance_reciprocal[i];
+					}
+				}
+
+				if (min_idx != min_idx_reciprocal)
+					continue;
+
+				if (min_distance > max_distance)
 					continue;
 
 				corr.index_query = *idx;
-				corr.index_match = index[0];
-				corr.distance = distance[0];
+				corr.index_match = neigh_xyz_indices[min_idx];
+				corr.distance = min_distance;
 				correspondences[nr_valid_correspondences++] = corr;
+
 			}
 		} else {
 			PointTarget pt_src;
