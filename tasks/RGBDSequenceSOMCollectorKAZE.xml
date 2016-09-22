@@ -40,8 +40,8 @@
 				<Component name="DepthSequence" type="CvBasic:Sequence" priority="3" bump="0">
 					<param name="sequence.directory">/home/mort/Objects/auto/</param>
 					<param name="sequence.pattern">.*_depth.png</param>
-                    <param name="mode.loop">0</param>
-                    <param name="mode.auto_next_image">0</param>
+                    			<param name="mode.loop">0</param>
+                    			<param name="mode.auto_next_image">0</param>
 				</Component>
 
 				<Component name="CameraInfo" type="CvCoreTypes:CameraInfoProvider" priority="4">
@@ -106,8 +106,21 @@
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Generation of sparse SIFT cloud
 <!--------------------------------------------------------------------------------------------------------------------->
+				<Component name="GaussImage" type="CvBasic:CvGaussianNoise" priority="25" bump="0">
+					<param name="pass_through">0</param>
+				</Component>
 
-                                <Component name="SIFT" type="CvBasic:CvSIFT" priority="30" bump="0">
+                                <Component name="SIFTNoisy" type="CvBasic:CvSIFT" priority="30" bump="0">
+					<param name="Calculations_path">/home/mort/wyniki/</param>
+				</Component>
+
+ 				<Component name="KAZENoisy" type="CvBasic:CvKAZE" priority="30" bump="0">
+					<param name="Calculations_path">/home/mort/wyniki/</param>
+					<param name="Diffusivity">3</param>
+				</Component>
+
+
+				<Component name="SIFT" type="CvBasic:CvSIFT" priority="30" bump="0">
 					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
@@ -122,6 +135,11 @@
 				<Component name="KAZE2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
 				</Component>
 
+				<Component name="SIFTNoisy2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
+				</Component>
+
+				<Component name="KAZENoisy2SPCConverter" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
+				</Component>
 
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Processing point clouds from NOW ON!
@@ -150,6 +168,13 @@
 				</Component>
 
 				<Component name="CloudTransformer" type="PCL:CloudTransformer" priority="41" bump="0">
+				</Component>
+
+				<Component name="GaussCloud" type="PCL:GaussCloud" priority="42" bump="0">
+                                        <param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Noisy.XYZ">0</param>
+					<param name="Noisy.RGB">0</param>
+					<param name="Noisy.ratio">0.1</param>
 				</Component>
 
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="43" bump="1">
@@ -216,6 +241,7 @@
 			<sink>CloudStorage.in_add_cloud_trigger</sink>
 			<sink>Writer.in_save_cloud_trigger</sink><!---->
 			<sink>Stats.in_trigger</sink>
+			<sink>GaussCloud.in_trigger</sink>
 		</Source>
 
 		<Source name="DepthSequence.out_img">
@@ -224,12 +250,17 @@
 	
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
-			<sink>SIFT.in_img</sink>
+			<sink>GaussImage.in_img</sink>
 			<sink>KAZE.in_img</sink>
+			<sink>SIFT.in_img</sink>
 			<sink>DetectCircles.in_img</sink>
 			<sink>DetectCirclesInv.in_img</sink>
 		</Source>
 
+		<Source name="GaussImage.out_img">
+			<sink>SIFTNoisy.in_img</sink>
+			<sink>KAZENoisy.in_img</sink>
+		</Source>
 		<Source name="RGBSequence.out_end_of_sequence_trigger">
 			<sink>Trigger.in_stop_auto_trigger</sink>
 		</Source>
@@ -274,6 +305,8 @@
 			<sink>RGBXYZM2PCConverter.in_depth_xyz</sink>
 			<sink>SIFT2SPCConverter.in_depth_xyz</sink>
 			<sink>KAZE2SPCConverter.in_depth_xyz</sink>
+			<sink>SIFTNoisy2SPCConverter.in_depth_xyz</sink>
+			<sink>KAZENoisy2SPCConverter.in_depth_xyz</sink>
 		</Source>
 
 
@@ -281,6 +314,8 @@
 			<sink>RGBXYZM2PCConverter.in_mask</sink>
 			<sink>SIFT2SPCConverter.in_mask</sink>
 			<sink>KAZE2SPCConverter.in_mask</sink>
+			<sink>SIFTNoisy2SPCConverter.in_mask</sink>
+			<sink>KAZENoisy2SPCConverter.in_mask</sink>
 		 </Source>
 
 		<Source name="RGBXYZM2PCConverter.out_cloud_xyzrgb">
@@ -304,10 +339,20 @@
 			<sink>SIFT2SPCConverter.in_features</sink>	
 		</Source>	
 
+		<Source name="SIFTNoisy.out_descriptors">
+			<sink>SIFTNoisy2SPCConverter.in_descriptors</sink>	
+		</Source>
+		<Source name="SIFTNoisy.out_features">
+			<sink>SIFTNoisy2SPCConverter.in_features</sink>	
+		</Source>
+
 		<Source name="SIFT2SPCConverter.out_cloud_xyzsift">
-			<sink>CloudTransformer.in_cloud_xyzsift</sink>
 			<sink>CloudStorage.in_cloud_xyzsift</sink>
 			<sink>PairwiseRegistration.in_src_cloud_xyzsift</sink>
+		</Source>
+
+		<Source name="SIFTNoisy2SPCConverter.out_cloud_xyzsift">
+			<sink>CloudTransformer.in_cloud_xyzsift</sink>
 		</Source>
 <!--------------------------------------------------------------------------------------------------------------------->
 <!--                              Generation of sparse KAZE cloud
@@ -321,9 +366,19 @@
 		</Source>	
 
 		<Source name="KAZE2SPCConverter.out_cloud_xyzkaze">
-			<sink>CloudTransformer.in_cloud_xyzkaze</sink>
 			<sink>CloudStorage.in_cloud_xyzkaze</sink>
 			<sink>PairwiseRegistration.in_src_cloud_xyzkaze</sink>
+		</Source>
+
+		<Source name="KAZENoisy.out_descriptors">
+			<sink>KAZENoisy2SPCConverter.in_descriptors</sink>	
+		</Source>
+		<Source name="KAZENoisy.out_features">
+			<sink>KAZENoisy2SPCConverter.in_features</sink>	
+		</Source>	
+
+		<Source name="KAZENoisy2SPCConverter.out_cloud_xyzkaze">
+			<sink>CloudTransformer.in_cloud_xyzkaze</sink>
 		</Source>
 
 <!--------------------------------------------------------------------------------------------------------------------->
@@ -337,16 +392,28 @@
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
+			<sink>GaussCloud.in_cloud_xyzrgb</sink>
+		</Source>
+
+		<Source name= "GaussCloud.out_cloud_xyzrgb">
 			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzkaze">
+			<sink>GaussCloud.in_cloud_xyzkaze</sink>
+		</Source>
+
+		<Source name= "GaussCloud.out_cloud_xyzkaze">
 			<sink>PairwiseRegistration.in_trg_cloud_xyzkaze</sink>
 			<sink>CloudStorage.in_cloud_xyzkaze</sink>
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzsift">
+			<sink>GaussCloud.in_cloud_xyzsift</sink>
+		</Source>
+
+		<Source name= "GaussCloud.out_cloud_xyzsift">
 			<sink>PairwiseRegistration.in_trg_cloud_xyzsift</sink>
 			<sink>CloudStorage.in_cloud_xyzsift</sink>
 		</Source>
