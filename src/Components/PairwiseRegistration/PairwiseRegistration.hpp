@@ -93,6 +93,11 @@ protected:
 	/// Input data stream containing target (next) XYZKAZEcloud.
 	Base::DataStreamIn<pcl::PointCloud<PointXYZKAZE>::Ptr, Base::DataStreamBuffer::Newest> in_trg_cloud_xyzkaze;
 
+	/// Input data stream containing source (previous) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_src_cloud_xyzrgb_original;
+	/// Input data stream containing target (next) XYZRGB cloud.
+	Base::DataStreamIn<pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Base::DataStreamBuffer::Newest> in_trg_cloud_xyzrgb_original;
+
 	/// Resulting transformation between XYZ clouds.
 	Base::DataStreamOut <Types::HomogMatrix> out_transformation_xyz;
 	Base::DataStreamIn<pcl::registration::CorrespondenceEstimation<PointXYZSIFT, PointXYZSIFT>::Ptr, Base::DataStreamBuffer::Newest > in_src_trg_correspondences;
@@ -163,6 +168,7 @@ private:
 			double time,
 			double fitness_score,
 			double correspondences);
+	void save_original_distances(Types::HomogMatrix& result);
 };
 
 } //: namespace PairwiseRegistration

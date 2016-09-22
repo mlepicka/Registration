@@ -107,7 +107,11 @@
 <!--                              Generation of sparse SIFT cloud
 <!--------------------------------------------------------------------------------------------------------------------->
 				<Component name="GaussImage" type="CvBasic:CvGaussianNoise" priority="25" bump="0">
-					<param name="pass_through">0</param>
+					<param name="pass_through">1</param>
+				</Component>
+
+				<Component name="GaussCopyImage" type="CvBasic:CvGaussianNoise" priority="26" bump="0">
+					<param name="pass_through">1</param>
 				</Component>
 
                                 <Component name="SIFTNoisy" type="CvBasic:CvSIFT" priority="30" bump="0">
@@ -172,17 +176,24 @@
 
 				<Component name="GaussCloud" type="PCL:GaussCloud" priority="42" bump="0">
                                         <param name="Calculations.path">/home/mort/wyniki/</param>
-					<param name="Noisy.XYZ">0</param>
+					<param name="Noisy.XYZ">1</param>
+					<param name="Noisy.RGB">0</param>
+					<param name="Noisy.ratio">0.1</param>
+				</Component>
+
+				<Component name="GaussCloud" type="PCL:GaussCopyCloud" priority="42" bump="0">
+                                        <param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Noisy.XYZ">1</param>
 					<param name="Noisy.RGB">0</param>
 					<param name="Noisy.ratio">0.1</param>
 				</Component>
 
 				<Component name="PairwiseRegistration" type="Registration:PairwiseRegistration" priority="43" bump="1">
 					<param name="Mode.ICP">1</param>
-					<param name="ICP.UseColour">0</param>
+					<param name="ICP.UseColour">1</param>
 					<param name="ICP.UseNormals">0</param>
 					<param name="ICP.UseSIFT">0</param>
-					<param name="ICP.UseKAZE">1</param>
+					<param name="ICP.UseKAZE">0</param>
 					<param name="ICP.MaxCorrespondenceDistance">0.012</param>
 					<param name="ICP.MaximumIterations">100</param>
 					<param name="ICP.EuclideanFitnessEpsilon">0.000000001</param>
@@ -215,7 +226,7 @@
 			<Executor name="Exec2" period="0.2">
 				<Component name="Viewer" type="PCL:CloudViewer" priority="103" bump="0">
 					<param name="title">Model point cloud</param>
-                    <param name="coordinate_system">0</param>
+                    			<param name="coordinate_system">0</param>
 				</Component>
 			</Executor>
 		</Subtask>
@@ -251,8 +262,7 @@
 		<Source name="RGBSequence.out_img">
 			<sink>RGBXYZM2PCConverter.in_color</sink>
 			<sink>GaussImage.in_img</sink>
-			<sink>KAZE.in_img</sink>
-			<sink>SIFT.in_img</sink>
+			<sink>GaussCopyImage.in_img</sink>
 			<sink>DetectCircles.in_img</sink>
 			<sink>DetectCirclesInv.in_img</sink>
 		</Source>
@@ -261,6 +271,12 @@
 			<sink>SIFTNoisy.in_img</sink>
 			<sink>KAZENoisy.in_img</sink>
 		</Source>
+
+		<Source name="GaussCopyImage.out_img">
+			<sink>SIFT.in_img</sink>
+			<sink>KAZE.in_img</sink>
+		</Source>
+
 		<Source name="RGBSequence.out_end_of_sequence_trigger">
 			<sink>Trigger.in_stop_auto_trigger</sink>
 		</Source>
@@ -324,6 +340,7 @@
 
 		<Source name="StatisticalOutlierRemoval.out_cloud_xyzrgb">
 			<sink>CloudTransformer.in_cloud_xyzrgb</sink>
+			<sink>PairwiseRegistration.in_src_cloud_xyzrgb_original</sink>
 			<sink>CloudStorage.in_cloud_xyzrgb</sink>
 			<sink>PairwiseRegistration.in_src_cloud_xyzrgb</sink>
 		</Source>
@@ -392,6 +409,7 @@
 		</Source>
 
 		<Source name= "CloudTransformer.out_cloud_xyzrgb">
+			<sink>PairwiseRegistration.in_trg_cloud_xyzrgb_original</sink>
 			<sink>GaussCloud.in_cloud_xyzrgb</sink>
 		</Source>
 
