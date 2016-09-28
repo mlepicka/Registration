@@ -117,34 +117,34 @@
 				</Component>
 
                                 <Component name="SIFT_1" type="CvBasic:CvSIFT" priority="30" bump="0">
-					<param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
  				<Component name="KAZE_1" type="CvBasic:CvKAZE" priority="30" bump="0">
-					<param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 					<param name="Diffusivity">3</param>
 				</Component>
 
 
 				<Component name="SIFT_0" type="CvBasic:CvSIFT" priority="30" bump="0">
-					<param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 				</Component>
 
  				<Component name="KAZE_0" type="CvBasic:CvKAZE" priority="30" bump="0">
-					<param name="Calculations.path">/home/mort/wyniki/</param>
+					<param name="Calculations_path">/home/mort/wyniki/</param>
 					<param name="Diffusivity">3</param>
 				</Component>
 
-                                <Component name="SIFT2SPCConverter_0" type="PCL:FeatureCloudConverter" priority="31" bump="0">
+                                <Component name="SIFT2SPCConverter_0" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
 				</Component>
 
-				<Component name="KAZE2SPCConverter_0" type="PCL:FeatureCloudConverter" priority="31" bump="0">
+				<Component name="KAZE2SPCConverter_0" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
 				</Component>
 
-				<Component name="SIFT2SPCConverter_1" type="PCL:FeatureCloudConverter" priority="31" bump="0">
+				<Component name="SIFT2SPCConverter_1" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
 				</Component>
 
-				<Component name="KAZE2SPCConverter_1" type="PCL:FeatureCloudConverter" priority="31" bump="0">
+				<Component name="KAZE2SPCConverter_1" type="SIFTObjectModel:FeatureCloudConverter" priority="31" bump="0">
 				</Component>
 
 <!--------------------------------------------------------------------------------------------------------------------->

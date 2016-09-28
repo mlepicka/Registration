@@ -16,8 +16,6 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/surface/mls.h>
 #include <pcl/common/transforms.h>
-// ICP
-#include <pcl/registration/icp.h>
 
 // ICP with normals
 #include <pcl/features/normal_3d.h>
@@ -25,6 +23,8 @@
 
 // ICP with colour
 #include "Types/CorrespondenceEstimationColor.hpp"
+
+//ICP with SIFT and KAZE features
 #include "Types/CorrespondanceEstimationSIFT.hpp"
 #include "Types/CorrespondanceEstimationKAZE.hpp"
 
@@ -60,17 +60,6 @@ public:
 	}
 };
 
-/*pcl::PointCloud<pcl::Normal>::Ptr getNormals( pcl::PointCloud<pcl::PointXYZRGB>::Ptr incloud ) {
-
- pcl::PointCloud<pcl::Normal>::Ptr normalsPtr = pcl::PointCloud<pcl::Normal>::Ptr (new pcl::PointCloud<pcl::Normal>);
- pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> norm_est;
- norm_est.setInputCloud( incloud );
- norm_est.setRadiusSearch( NORMALS_RADIUS );
- norm_est.compute( *normalsPtr );
- return normalsPtr;
- }
- */
-
 PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 		Base::Component(name), prop_ICP("Mode.ICP", true), prop_ICP_MaxCorrespondenceDistance(
 				"ICP.MaxCorrespondenceDistance", 0.05), prop_ICP_MaximumIterations(
@@ -79,8 +68,8 @@ PairwiseRegistration::PairwiseRegistration(const std::string & name) :
 				"ICP.EuclideanFitnessEpsilon", 1), prop_ICP_colour(
 				"ICP.UseColour", true), prop_ICP_normals("ICP.UseNormals",
 				true), prop_ICP_SIFT("ICP.UseSIFT", true), prop_ICP_KAZE(
-				"ICP.UseKAZE", true), prop_calc_path("Calculations_path",
-				std::string(".")) {
+				"ICP.UseKAZE", true), prop_calc_path("Calculations.path",
+				std::string("")) {
 	// Register ICP properties.
 	registerProperty(prop_ICP);
 	registerProperty(prop_ICP_MaxCorrespondenceDistance);
@@ -111,8 +100,10 @@ void PairwiseRegistration::prepareInterface() {
 	registerStream("in_trg_cloud_xyzsift", &in_trg_cloud_xyzsift);
 	registerStream("in_src_cloud_xyzkaze", &in_src_cloud_xyzkaze);
 	registerStream("in_trg_cloud_xyzkaze", &in_trg_cloud_xyzkaze);
-	registerStream("in_trg_cloud_xyzrgb_original", &in_trg_cloud_xyzrgb_original);
-	registerStream("in_src_cloud_xyzrgb_original", &in_src_cloud_xyzrgb_original);
+	registerStream("in_trg_cloud_xyzrgb_original",
+			&in_trg_cloud_xyzrgb_original);
+	registerStream("in_src_cloud_xyzrgb_original",
+			&in_src_cloud_xyzrgb_original);
 
 	registerHandler("pairwise_registration_xyzsift",
 			boost::bind(&PairwiseRegistration::pairwise_registration_xyzsift,
@@ -123,7 +114,6 @@ void PairwiseRegistration::prepareInterface() {
 	registerHandler("pairwise_registration_xyzkaze",
 			boost::bind(&PairwiseRegistration::pairwise_registration_xyzkaze,
 					this));
-	addDependency("pairwise_registration_xyzrgb", &in_trg_cloud_xyzrgb);
 	addDependency("pairwise_registration_xyzkaze", &in_trg_cloud_xyzkaze);
 	addDependency("pairwise_registration_xyzkaze", &in_src_cloud_xyzkaze);
 
@@ -159,46 +149,107 @@ bool PairwiseRegistration::onStart() {
 	return true;
 }
 
-void PairwiseRegistration::saveCalculations(const double nr_iterations,
+void PairwiseRegistration::save_calculations(const double nr_iterations,
 		const double size_of_cloud, double time, double fitness_score,
 		double correspondences) {
+	if (!in_save_src_cloud_trigger.empty() && !string(prop_calc_path).empty()) {
+		CLOG(LINFO)<< "Saving calculations in path: " << string(prop_calc_path) << endl;
+		std::ofstream iterations, cloud_size, cloud_size_original, proceed_time, fitness_score_value, nr_correspondences;
 
-	CLOG(LINFO)<< "Saving calculations in path: " << string(prop_calc_path) << endl;
-	std::ofstream iterations, cloud_size, cloud_size_original, proceed_time, fitness_score_value, nr_correspondences;
-
-	iterations.open((string(prop_calc_path) + string("ilosc_iteracji.txt")).c_str(),
-			ios::out | ios::app);
-
-	cloud_size.open(
-			(string(prop_calc_path) + string("ilosc_punktow_w_chmurze.txt")).c_str(),
-			ios::out | ios::app);
-
-	cloud_size_original.open(
-				(string(prop_calc_path) + string("ilosc_punktow_w_chmurze_oryginalnej.txt")).c_str(),
+		iterations.open((string(prop_calc_path) + string("ilosc_iteracji.txt")).c_str(),
 				ios::out | ios::app);
 
-	proceed_time.open((string(prop_calc_path) + string("czas_icp.txt")).c_str(),
-			ios::out | ios::app);
+		cloud_size.open(
+				(string(prop_calc_path) + string("ilosc_punktow_w_chmurze.txt")).c_str(),
+				ios::out | ios::app);
 
-	fitness_score_value.open((string(prop_calc_path) + string("wartosc_funkcji_bledu.txt")).c_str(),
-			ios::out | ios::app);
+		if(!in_src_cloud_xyzrgb_original.empty()) {
+			cloud_size_original.open(
+					(string(prop_calc_path) + string("ilosc_punktow_w_chmurze_oryginalnej.txt")).c_str(),
+					ios::out | ios::app);
+		}
 
-	nr_correspondences.open((string(prop_calc_path) + string("znalezione_dopasowania.txt")).c_str(),
-			ios::out | ios::app);
+		proceed_time.open((string(prop_calc_path) + string("czas_icp.txt")).c_str(),
+				ios::out | ios::app);
 
-	iterations << nr_iterations << endl;
-	cloud_size << size_of_cloud << endl;
-	cloud_size_original << src_cloud_xyzrgb->size() << endl;
-	proceed_time << time << endl;
-	fitness_score_value << fitness_score << endl;
-	nr_correspondences << correspondences << endl;
+		fitness_score_value.open((string(prop_calc_path) + string("wartosc_funkcji_bledu.txt")).c_str(),
+				ios::out | ios::app);
 
-	iterations.close();
-	cloud_size.close();
-	cloud_size_original.close();
-	proceed_time.close();
-	fitness_score_value.close();
-	nr_correspondences.close();
+		nr_correspondences.open((string(prop_calc_path) + string("znalezione_dopasowania.txt")).c_str(),
+				ios::out | ios::app);
+
+		iterations << nr_iterations << endl;
+		cloud_size << size_of_cloud << endl;
+
+		if(!in_src_cloud_xyzrgb_original.empty()) {
+			src_cloud_xyzrgb = in_src_cloud_xyzrgb_original.read();
+			cloud_size_original << src_cloud_xyzrgb->size() << endl;
+		}
+
+		proceed_time << time << endl;
+		fitness_score_value << fitness_score << endl;
+		nr_correspondences << correspondences << endl;
+
+		iterations.close();
+		cloud_size.close();
+
+		if(!in_src_cloud_xyzrgb_original.empty()){
+			cloud_size_original.close();
+		}
+
+		proceed_time.close();
+		fitness_score_value.close();
+		nr_correspondences.close();
+	}
+}
+void PairwiseRegistration::save_original_distances(Types::HomogMatrix& result) {
+	if (!in_save_src_cloud_trigger.empty() && string(prop_calc_path).empty()) {
+
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp(
+				new pcl::PointCloud<pcl::PointXYZRGB>);
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp;
+		pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud;
+
+		if (!in_trg_cloud_xyzrgb_original.empty()
+				&& !in_src_cloud_xyzrgb_original.empty()) {
+			tmp = in_trg_cloud_xyzrgb_original.read();
+			src_cloud = in_src_cloud_xyzrgb_original.read();
+		} else if (!in_trg_cloud_xyzrgb.empty()
+				&& !in_src_cloud_xyzrgb.empty()) {
+			tmp = in_trg_cloud_xyzrgb.read();
+			src_cloud = in_src_cloud_xyzrgb.read();
+		} else {
+			return;
+		}
+
+		// Transform it.
+		pcl::transformPointCloud(*tmp, *trans_tmp, result);
+		Eigen::Matrix<float, 3, 1> src_points, tgt_points;
+		fstream dists_in_cloud;
+		stringstream name;
+		name << string(prop_calc_path) << "punkty/odeglosci_widok_nr_"
+				<< counter << ".txt";
+		dists_in_cloud.open(name.str().c_str(), ios::out | ios::app);
+		for (int i = 0; i < src_cloud.get()->points.size(); i++) {
+			src_points << src_cloud.get()->points[i].x, src_cloud.get()->points[i].y, src_cloud.get()->points[i].z;
+			tgt_points << trans_tmp.get()->points[i].x, trans_tmp.get()->points[i].y, trans_tmp.get()->points[i].z;
+			float d = (src_points - tgt_points).norm();
+			dists_in_cloud << d << endl;
+		}
+		in_save_src_cloud_trigger.read();
+		counter++;
+	}
+}
+template<typename T> void PairwiseRegistration::set_parameters(
+		pcl::IterativeClosestPoint<T, T>& icp) {
+	// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
+	icp.setMaxCorrespondenceDistance(prop_ICP_MaxCorrespondenceDistance);
+	// Set the maximum number of iterations (criterion 1)
+	icp.setMaximumIterations(prop_ICP_MaximumIterations);
+	// Set the transformation epsilon (criterion 2)
+	icp.setTransformationEpsilon(prop_ICP_TransformationEpsilon);
+	// Set the euclidean distance difference epsilon (criterion 3)
+	icp.setEuclideanFitnessEpsilon(prop_ICP_EuclideanFitnessEpsilon);
 }
 
 Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift(
@@ -213,13 +264,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift
 		pcl::IterativeClosestPoint<PointXYZSIFT, PointXYZSIFT> icp;
 
 		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (prop_ICP_MaximumIterations);
-		// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-		// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<PointXYZSIFT>(icp);
 
 		// Set correspondence two-step correspondence estimation using colour.
 		pcl::registration::CorrespondenceEstimationSIFT<PointXYZSIFT, PointXYZSIFT, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationSIFT<PointXYZSIFT, PointXYZSIFT, float>);
@@ -241,11 +286,11 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzsift
 		<< " iterations: " << icp.nr_iterations_
 		<< " correspondences: " << icp.correspondences_->size();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzsift_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzsift_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+
 		// Set resulting transformation.
 		result.matrix() = icp_trans.matrix().inverse();
+
 	}
 	return result;
 
@@ -255,21 +300,14 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzkaze
 		pcl::PointCloud<PointXYZKAZE>::Ptr src_cloud_xyzkaze_,
 		pcl::PointCloud<PointXYZKAZE>::Ptr trg_cloud_xyzkaze_) {
 	CLOG(LTRACE)<< "pairwise_icp_based_registration_xyzkaze_";
-	// Temporary variable storing the resulting transformation.
+// Temporary variable storing the resulting transformation.
 	Types::HomogMatrix result;
 
 	if(prop_ICP_KAZE) {
 		Common::Timer timer;
 		pcl::IterativeClosestPoint<PointXYZKAZE, PointXYZKAZE> icp;
 
-		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (prop_ICP_MaximumIterations);
-		// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-		// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<PointXYZKAZE>(icp);
 
 		// Set correspondence two-step correspondence estimation using colour.
 		pcl::registration::CorrespondenceEstimationKAZE<PointXYZKAZE, PointXYZKAZE, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationKAZE<PointXYZKAZE, PointXYZKAZE, float>);
@@ -291,9 +329,8 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzkaze
 		<< " iterations: " << icp.nr_iterations_
 		<< " correspondences: " << icp.correspondences_->size();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzkaze_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzkaze_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+
 		// Set resulting transformation.
 		result.matrix() = icp_trans.matrix().inverse();
 	}
@@ -337,17 +374,9 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		pcl::concatenateFields(*trg_cloud_xyzrgb_, *tmp_trg_cloud_normal, *trg_cloud_xyzrgbnormal);
 
 		// Use ICP with normals AND colour to get "better" transformation.
-//		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
 		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
 
-// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (prop_ICP_MaximumIterations);
-// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<pcl::PointXYZRGBNormal>(icp);
 
 		// Set correspondence two-step correspondence estimation using colour.
 		pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal, float>);
@@ -366,9 +395,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 
 		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzrgbnormal->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzrgbnormal->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
 
 		// Get the transformation from target to source.
 		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
@@ -404,17 +431,9 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		pcl::concatenateFields(*trg_cloud_xyzrgb_, *tmp_trg_cloud_normal, *trg_cloud_xyzrgbnormal);
 
 		// Use ICP with normals to get "better" transformation.
-//		pcl::IterativeClosestPointNonLinear<pcl::PointNormal, pcl::PointNormal> icp;
 		pcl::IterativeClosestPointWithNormals<pcl::PointXYZRGBNormal, pcl::PointXYZRGBNormal> icp;
 
-// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (2);
-// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<pcl::PointXYZRGBNormal>(icp);
 
 		icp.setInputSource (src_cloud_xyzrgbnormal);
 		icp.setInputTarget (trg_cloud_xyzrgbnormal);
@@ -424,13 +443,14 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		// Align clouds.
 		Common::Timer timer;
 		timer.restart();
+
 		icp.align(*aligned_trg_cloud_xyzrgbnormal);
+
 		double time = timer.elapsed();
 		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzrgbnormal->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzrgbnormal->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+
 		// Get the transformation from target to source.
 		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 
@@ -444,14 +464,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		// Use ICP with colour to get "better" transformation.
 		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
-		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (prop_ICP_MaximumIterations);
-		// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-		// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<pcl::PointXYZRGB>(icp);
 
 		// Set correspondence two-step correspondence estimation using colour.
 		pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>::Ptr ceptr(new pcl::registration::CorrespondenceEstimationColor<pcl::PointXYZRGB, pcl::PointXYZRGB, float>);
@@ -469,9 +482,8 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		double time = timer.elapsed();
 		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzrgb_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzrgb_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+
 		// Get the transformation from target to source.
 		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
@@ -484,14 +496,7 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		// Use ICP to get "better" transformation.
 		pcl::IterativeClosestPoint<pcl::PointXYZRGB, pcl::PointXYZRGB> icp;
 
-		// Set the max correspondence distance to 5cm (e.g., correspondences with higher distances will be ignored)
-		icp.setMaxCorrespondenceDistance (prop_ICP_MaxCorrespondenceDistance);
-		// Set the maximum number of iterations (criterion 1)
-		icp.setMaximumIterations (prop_ICP_MaximumIterations);
-		// Set the transformation epsilon (criterion 2)
-		icp.setTransformationEpsilon (prop_ICP_TransformationEpsilon);
-		// Set the euclidean distance difference epsilon (criterion 3)
-		icp.setEuclideanFitnessEpsilon (prop_ICP_EuclideanFitnessEpsilon);
+		set_parameters<pcl::PointXYZRGB>(icp);
 
 		// Add source and target clours.
 		icp.setInputSource(src_cloud_xyzrgb_);
@@ -505,9 +510,8 @@ Types::HomogMatrix PairwiseRegistration::pairwise_icp_based_registration_xyzrgb(
 		double time = timer.elapsed();
 		CLOG(LINFO) << "ICP has converged:" << icp.hasConverged() << " score: " << icp.getFitnessScore();
 
-		if(!in_save_src_cloud_trigger.empty()) {
-			saveCalculations(icp.nr_iterations_, src_cloud_xyzrgb_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
-		}
+		save_calculations(icp.nr_iterations_, src_cloud_xyzrgb_->size(), time, icp.getFitnessScore(), icp.correspondences_->size());
+
 		// Get the transformation from target to source.
 		Types::HomogMatrix icp_trans = icp.getFinalTransformation();
 		CLOG(LINFO) << "icp_trans:\n" << icp_trans;
@@ -564,35 +568,6 @@ void PairwiseRegistration::pairwise_registration_xyzrgb() {
 	}
 }
 
-void PairwiseRegistration::save_original_distances(Types::HomogMatrix& result) {
-	if (!in_save_src_cloud_trigger.empty()
-			&& !in_trg_cloud_xyzrgb_original.empty()
-			&& !in_src_cloud_xyzrgb_original.empty()) {
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr trans_tmp(
-				new pcl::PointCloud<pcl::PointXYZRGB>);
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr tmp =
-				in_trg_cloud_xyzrgb_original.read();
-		pcl::PointCloud<pcl::PointXYZRGB>::Ptr src_cloud =
-				in_src_cloud_xyzrgb_original.read();
-		// Transform it.
-		pcl::transformPointCloud(*tmp, *trans_tmp, result);
-		Eigen::Matrix<float, 3, 1> src_points, tgt_points;
-		fstream dists_in_cloud;
-		stringstream name;
-		name << string(prop_calc_path) << "punkty/odeglosci_widok_nr_"
-				<< counter << ".txt";
-		dists_in_cloud.open(name.str().c_str(), ios::out | ios::app);
-		for (int i = 0; i < src_cloud.get()->points.size(); i++) {
-			src_points << src_cloud.get()->points[i].x, src_cloud.get()->points[i].y, src_cloud.get()->points[i].z;
-			tgt_points << trans_tmp.get()->points[i].x, trans_tmp.get()->points[i].y, trans_tmp.get()->points[i].z;
-			float d = (src_points - tgt_points).norm();
-			dists_in_cloud << d << endl;
-		}
-		in_save_src_cloud_trigger.read();
-		counter++;
-	}
-}
-
 void PairwiseRegistration::pairwise_registration_xyzsift() {
 	CLOG(LTRACE)<< "pairwise_registration_xyzsift";
 
@@ -612,7 +587,7 @@ void PairwiseRegistration::pairwise_registration_xyzsift() {
 			in_save_src_cloud_trigger.read();
 			// pcl::copyPointCloud<pcl::PointXYZRGB> (*trg_cloud_xyzrgb, *src_cloud_xyzrgb);
 		}		//: if
-		src_cloud_xyzrgb = in_src_cloud_xyzrgb.read();
+
 		// Debug.
 		CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzsift->size();
 		if (!src_cloud_xyzsift->empty ())
@@ -650,7 +625,7 @@ void PairwiseRegistration::pairwise_registration_xyzkaze() {
 
 		CLOG(LINFO) << "Reading src_cloud!";
 		src_cloud_xyzkaze = in_src_cloud_xyzkaze.read();
-		src_cloud_xyzrgb = in_src_cloud_xyzrgb.read();
+
 		// Check whether source cloud is received and is required to save.
 		if ((!in_src_cloud_xyzkaze.empty()) && (!in_save_src_cloud_trigger.empty())) {
 			CLOG(LINFO) << "Storing source cloud";
@@ -662,7 +637,7 @@ void PairwiseRegistration::pairwise_registration_xyzkaze() {
 		// Debug.
 		CLOG(LDEBUG) << "Target cloud size:" << trg_cloud_xyzkaze->size();
 		if (!src_cloud_xyzkaze->empty ())
-		CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzkaze->size();
+			CLOG(LDEBUG) << "Source cloud size:" << src_cloud_xyzkaze->size();
 
 		/// Previous cloud empty - initialization or ICP-based pairwise registration should not be used.
 		if (src_cloud_xyzkaze->empty () || !prop_ICP) {

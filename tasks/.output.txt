@@ -1,0 +1,132 @@
+in calculate()
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+homog w static 
+0.990033  0.0993347  -0.0998329  -0.00494778 
+ -0.0894178  0.991028  0.0993348  -0.00500478 
+ 0.108805  -0.0894179  0.990033  -0.00504699 
+ 
+aktualny błąd: 
+5.96046e-08           0 4.84288e-07 1.05705e-07
+2.98023e-08           0  8.9407e-08 5.72763e-08
+4.76837e-07  1.2666e-07 5.96046e-08 1.15484e-07
+          0           0           0           0
+blad kat: 0
+bledy w xyz: 1.05705e-07 5.72763e-08 1.15484e-07 
+blad odleglosc: 1.66705e-07
+in calculate()
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+homog w static 
+0.990057  0.100167  -0.0987644  -0.0042764 
+ -0.0903395  0.990937  0.0994082  -0.00529606 
+ 0.107827  -0.0894974  0.990133  -0.0050678 
+ 
+nowa rotMatrix[0.9900566393064822, 0.1001670431556148, -0.09876443909938176;
+  -0.0903395469099763, 0.9909373236412392, 0.09940818315831941;
+  0.1078267927245102, -0.08949739705823286, 0.9901331217015955]
+
+nowy rvec [-0.0949099523583373;
+  -0.1037955784449492;
+  -0.0957143318177652]
+
+kat a arccos: 1.05809
+Uśredniony kąt: 0.170173
+Uśredniona oś: [-0.5575026162390357;
+  -0.6129637824852836;
+  -0.5598664094975991]
+Uśredniony rvec: [-0.0948718037117587;
+  -0.1043097879013849;
+  -0.09527405712458475]
+Odchylenie standardowe kąta: 3.35384e-05
+Odchylenie standardowe osi w X: 0.000268466
+Odchylenie standardowe osi w Y: 0.00201641
+Odchylenie standardowe osi w Z: 0.00194032
+aktualny błąd: 
+ 2.3365e-05 0.000832379  0.00106897 0.000671276
+0.000921801 9.09567e-05 7.35149e-05 0.000291339
+0.000978328 7.96467e-05 9.98378e-05 2.06921e-05
+          0           0           0           0
+blad kat: 0.0146404
+bledy w xyz: 0.000671276 0.000291339 2.06921e-05 
+blad odleglosc: 0.000732064
+in calculate()
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+homog w static 
+0.990137  0.0991071  -0.0990233  -0.00403294 
+ -0.0891543  0.990952  0.100333  -0.0049372 
+ 0.108071  -0.0905147  0.990014  -0.00501276 
+ 
+nowa rotMatrix[0.9901374570993229, 0.09910706901342113, -0.09902325444286074;
+  -0.08915433219585685, 0.9909515048210997, 0.1003325477774233;
+  0.1080709077393049, -0.09051466159892058, 0.9900140276460913]
+
+nowy rvec [-0.0958858534668857;
+  -0.104048681422889;
+  -0.0945866863278377]
+
+kat a arccos: 1.05815
+Uśredniony kąt: 0.170181
+Uśredniona oś: [-0.5594627668904265;
+  -0.6124239390471666;
+  -0.5584941843144242]
+Uśredniony rvec: [-0.09520978931629662;
+  -0.1042227609408675;
+  -0.09504495521391447]
+Odchylenie standardowe kąta: 9.12512e-06
+Odchylenie standardowe osi w X: 0.00226339
+Odchylenie standardowe osi w Y: 0.000623357
+Odchylenie standardowe osi w Z: 0.00158451
+aktualny błąd: 
+0.000104189 0.000227593 0.000810161  0.00091473
+0.000263415 7.68304e-05 0.000997886  6.7526e-05
+ 0.00073421  0.00109691 1.92523e-05 3.43435e-05
+          0           0           0           0
+blad kat: 0.0141519
+bledy w xyz: 0.00091473 6.7526e-05 3.43435e-05 
+blad odleglosc: 0.000917861
+in calculate()
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+NOT identity matrix
+homog w static 
+0.990033  0.0993347  -0.0998329  -0.00494778 
+ -0.0894178  0.991028  0.0993348  -0.00500478 
+ 0.108805  -0.0894179  0.990033  -0.00504699 
+ 
+aktualny błąd: 
+5.96046e-08           0 4.84288e-07 1.05705e-07
+2.98023e-08           0  8.9407e-08 5.72763e-08
+4.76837e-07  1.2666e-07 5.96046e-08 1.15484e-07
+          0           0           0           0
+blad kat: 0
+bledy w xyz: 1.05705e-07 5.72763e-08 1.15484e-07 
+blad odleglosc: 1.66705e-07

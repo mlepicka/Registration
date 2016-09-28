@@ -24,6 +24,10 @@
 #include <pcl/registration/correspondence_estimation.h>
 #include <pcl/registration/correspondence_rejection_sample_consensus.h>
 #include <pcl/registration/correspondence_rejection_distance.h>
+
+// ICP
+#include <pcl/registration/icp.h>
+
 namespace Processors {
 namespace PairwiseRegistration {
 
@@ -111,7 +115,6 @@ protected:
 
     /// Trigger - used for returning previous cloud.
     Base::DataStreamIn<Base::UnitType, Base::DataStreamBuffer::Newest> in_save_src_cloud_trigger;
-    //pcl::CorrespondencesPtr estimateCorrespondences(pcl::PointCloud<PointXYZSIFT>::Ptr src_cloud_, pcl::PointCloud<PointXYZSIFT>::Ptr trg_cloud_);
 
 	/****************** ICP PROPERTIES ***********************/
 
@@ -146,8 +149,6 @@ protected:
 	Base::Property<std::string> prop_calc_path;
 
 
-	/// Align XYZ clouds - handler.
-//	void pairwise_registration_xyz();
 	Types::HomogMatrix result;
 	/// Number of views.
 		int counter;
@@ -162,13 +163,15 @@ protected:
 	Types::HomogMatrix pairwise_icp_based_registration_xyzkaze(pcl::PointCloud<PointXYZKAZE>::Ptr src_cloud_xyzkaze_, pcl::PointCloud<PointXYZKAZE>::Ptr trg_cloud_xyzkaze_);
 
 private:
-	void saveCalculations(
+	void save_calculations(
 			const double nr_iterations,
 			const double size_of_cloud,
 			double time,
 			double fitness_score,
 			double correspondences);
 	void save_original_distances(Types::HomogMatrix& result);
+	template<typename T> void set_parameters(
+			 pcl::IterativeClosestPoint<T, T>& icp);
 };
 
 } //: namespace PairwiseRegistration
